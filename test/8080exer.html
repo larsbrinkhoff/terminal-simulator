@@ -1,0 +1,534 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+		<title>8080/8085 CPU Exerciser</title>
+  		<meta name="keywords" content="intel 8080 exerciser zexdoc cringle">
+		<meta name="author" content="Ian Bartholomew">
+		<meta name="generator" content="Notepad++">
+		<link rel="stylesheet" type="text/css" href="8080exer_files/styles.css">
+	</head>
+
+		<h1>8080/8085 CPU Exerciser</h1>
+		<hr>
+
+		<div id="content">
+			<h2>Background</h2>
+			<p>In the early 1990s Frank Cringle wrote an exerciser for the Z80 
+and released it under the GNU General Public License.  The purpose of 
+the exerciser was to test the operations of Z80 emulators against the 
+results obtained from a physical Z80 CPU, and to document the results.</p>
+			<p>I was in need of a way to test my 8080 emulator, so I have 
+modified Frank's work to provide a similar facility for the 8080 CPU.  
+Details of the changes I made, and Frank's original documentation, can 
+be found in the source file (link below).</p>
+			<p>The exerciser doesn't work in the way you would probably expect: 
+perform a single CPU instruction and immediately check the resulting 
+processor state.  Instead it programatically selects, and executes with 
+varying arguments, a series of associated opcodes (all 8 bit ALU 
+operations for example) and after each operation it merges the new CPU 
+state (registers and flag values) into a running CRC value.</p>
+			<p>After each individual group of tests you therefore end up with a 
+single CRC value that represents the amalgamated results of every 
+operation that was executed as part of that test.  If you run the same 
+test on a physical CPU as well as an emulator, and the generated CRC 
+value from each source is identical, then you can safely assume that the
+ emulator is working in exactly the same way as the hardware.</p>
+			<p>There are two downsides to this technique -</p>
+			<ul>
+				<li>You only get a Pass/Fail response. There is no indication as to which operation failed.</li>
+				<li>You have to have access to the results of the same tests run on a physical CPU, to obtain the baseline results.</li>
+			</ul>
+			<p>There's nothing much I can do about the first downside, that's up 
+to the emulator writer and a lot of tea (or coffee).  The second 
+downside is what this page hopes to address.</p>
+
+			<h2>Basic Exerciser</h2>
+			<p>The basic exerciser has no pre-defined CRC result values.  For 
+each test it expects a 32-bit CRC of 0 and, as a different result will 
+always be obtained, it reports the test as failing.   However, the error
+ message also includes the expected CRC, and that is what we are 
+interested in here.</p>
+			<img src="8080exer_files/8080exer.png" alt="Basic exerciser">
+			<p>I would appreciate it if anyone who has a CP/M 2.2 system running 
+on an 8080/8085 processer would run the exerciser and let me know the 
+reported values along with a description of the 8080/8085 CPU used. I 
+can then add the expected CRC values to an updated version of the 
+exerciser, allowing emulator writers to have a simple to use test for 
+the accuracy of their emulation.</p>
+			<div id="info">The complete set of tests will take approximately 3 
+hours 20 minutes to run on a 2MHz 8080.  However, this figure can be 
+reduced to approximately 30 minutes by removing the 8 bit alu tests - 
+albeit with a reduction in the coverage of the program.  If you would 
+prefer to run the shorter test suite then please contact me and I will 
+send you a copy of the modified code; I will still be happy to get any 
+results.</div>
+			<h2>Basic Exerciser Files</h2>
+			<p>All files are provided in three different formats</p>
+			<ul style="list-style-type: circle">
+				<li>mac - source code for the Microsoft M80 assembler.</li>
+				<li>com - the source assembled into a CP/M com file.</li>
+				<li>hex - the source assembled into a CP/M (Intel format) hex file.</li>
+			</ul>
+
+			<ul>
+				<li>
+					These files contain a modified version, for the 8080/8085, of Frank
+ Cringles original preliminary test file.  The purpose of this 
+additional test, to be run before the main exerciser (both 8080 and 8085
+ versions), is just to test that the emulator is performing basic 
+operations correctly (jmp, call, mvi etc).
+					<ul>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080PRE.MAC">8080PRE.MAC (5 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080PRE.COM">8080PRE.COM (1 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080PRE.HEX">8080PRE.HEX (3 KB)</a></li>
+					</ul>
+				</li>
+				<li>
+					These files contain the basic exerciser for a CP/M system using an 8080 CPU.
+					<ul>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EXER.MAC">8080EXER.MAC (29 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EXER.COM">8080EXER.COM (5 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EXER.HEX">8080EXER.HEX (11 KB)</a></li>
+					</ul>
+				</li>
+				<li>
+					These files contain the basic exerciser for a CP/M system using an 8085 CPU.
+					<ul>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EXER.MAC">8085EXER.MAC (29 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EXER.COM">8085EXER.COM (5 KB)</a></li>
+						<li><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EXER.HEX">8085EXER.HEX (11 KB)</a></li>
+					</ul>
+				</li>
+			</ul>
+
+			<h2>Results</h2>
+
+			<table>
+				<tbody><tr>
+					<td>
+						<table border="2">
+							<tbody><tr>
+								<th>8080</th>
+								<th>1 3 4 5 8 9<br>10 11 12 13</th>
+								<th>6 7</th>
+							</tr>
+							<tr>
+								<td>DAD &lt;B,D,H,SP&gt;</td>
+								<td>14474BA6</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>ALUOP NN</td>
+								<td>9E922F9E</td>
+								<td>7799EA9D</td>
+							</tr>
+							<tr>
+								<td>ALUOP &lt;B,C,D,E,H,L,M,A&gt;</td>
+								<td>CF762C86</td>
+								<td>B3491C2A</td>
+							</tr>
+							<tr>
+								<td>&lt;DAA,CMA,STC,CMC&gt;</td>
+								<td>BB3F030C</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; A</td>
+								<td>ADB6460E</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; B</td>
+								<td>83ED1345</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; B</td>
+								<td>F79287CD</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; C</td>
+								<td>E5F6721B</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; D</td>
+								<td>15B5579A</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; D</td>
+								<td>7F4E2501</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; E</td>
+								<td>CF2AB396</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; H</td>
+								<td>12B2952C</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; H</td>
+								<td>9F2B23C0</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; L</td>
+								<td>FF57D356</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; M</td>
+								<td>92E963BD</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; SP</td>
+								<td>D5702FAB</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>LHLD NNNN</td>
+								<td>A9C3D5CB</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>SHLD NNNN</td>
+								<td>E8864F26</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>LXI &lt;B,D,H,SP&gt;,NNNN</td>
+								<td>FCF46E12</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>LDAX &lt;B,D&gt;</td>
+								<td>2B821D5F</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>MVI &lt;B,C,D,E,H,L,M,A&gt;,NN</td>
+								<td>EAA72044</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>MOV &lt;B,C,D,E,H,L,A&gt;,&lt;B,C,D,E,H,L,A&gt;</td>
+								<td>10B58CEE</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>STA NNNN / LDA NNNN</td>
+								<td>ED57AF72</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>&lt;RLC,RRC,RAL,RAR&gt;</td>
+								<td>E0D89235</td>
+								<td>&lt;</td>
+							</tr>
+							<tr>
+								<td>STAX &lt;B,D&gt;</td>
+								<td>2B0471E9</td>
+								<td>&lt;</td>
+							</tr>
+						</tbody></table>
+					</td>
+					<td>
+						<table border="2">
+								<tbody><tr>
+								<th>8085</th>
+								<th>2</th>
+								</tr>
+								<tr>
+								<td>DAD &lt;B,D,H,SP&gt;</td>
+								<td>44331DEF</td>
+								</tr>
+								<tr>
+								<td>ALUOP NN</td>
+								<td>98FAF22B</td>
+								</tr>
+								<tr>
+								<td>ALUOP &lt;B,C,D,E,H,L,M,A&gt;</td>
+								<td>-</td>
+								</tr>
+								<tr>
+								<td>&lt;DAA,CMA,STC,CMC&gt;</td>
+								<td>17CFAB99</td>
+								</tr> 
+								<tr>
+								<td>&lt;INR,DCR&gt; A</td>
+								<td>9EF4EF36</td>
+								</tr>
+								<tr>
+								<td>&lt;INR,DCR&gt; B</td>
+								<td>B0AFBA7D</td>
+								</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; B</td>
+								<td>D38A84E2</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; C</td>
+								<td>D6B4DB23</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; D</td>
+								<td>26F7FEA2</td>
+								</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; D</td>
+								<td>5B56262E</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; E</td>
+								<td>FC681AAE</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; H</td>
+								<td>21F03C14</td>
+								</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; H</td>
+								<td>BB3320EF</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; L</td>
+								<td>CC157A6E</td>
+								</tr>
+							<tr>
+								<td>&lt;INR,DCR&gt; M</td>
+								<td>A1ABCA85</td>
+								</tr>
+							<tr>
+								<td>&lt;INX,DCX&gt; SP</td>
+								<td>F1682C84</td>
+								</tr>
+							<tr>
+								<td>LHLD NNNN</td>
+								<td>6D1EEB35</td>
+								</tr>
+							<tr>
+								<td>SHLD NNNN</td>
+								<td>2C5B71D8</td>
+								</tr>
+							<tr>
+								<td>LXI &lt;B,D,H,SP&gt;,NNNN</td>
+								<td>CFDFBBB3</td>
+								</tr>
+							<tr>
+								<td>LDAX &lt;B,D&gt;</td>
+								<td>30CDCCC6</td>
+								</tr>
+							<tr>
+								<td>MVI &lt;B,C,D,E,H,L,M,A&gt;,NN</td>
+								<td>CC3F3D29</td>
+								</tr>
+							<tr>
+								<td>MOV &lt;B,C,D,E,H,L,A&gt;,&lt;B,C,D,E,H,L,A&gt;</td>
+								<td>E2C0FEB3</td>
+								</tr>
+							<tr>
+								<td>STA NNNN / LDA NNNN</td>
+								<td>F6187EEB</td>
+								</tr>
+								<tr>
+								<td>&lt;RLC,RRC,RAL,RAR&gt;</td>
+								<td>7EA730B3</td>
+								</tr>
+								<tr>
+								<td>STAX &lt;B,D&gt;</td>
+								<td>B726A433</td>
+								</tr>
+						</tbody></table>
+					</td>
+				</tr>
+			</tbody></table>
+
+			<table>
+				<tbody><tr>
+					<td>
+						<table border="2">
+							<tbody><tr>
+								<th>Result</th>
+								<th>Processor</th>
+								<th>Contributor</th>
+								<th>Comments</th>
+								<th>mac</th>
+								<th>com</th>
+								<th>hex</th>
+							</tr>
+							<tr>
+								<td>(1)</td>
+								<td>KR580VM80A</td>
+								<td>Alexander Timoshenko</td>
+								<td>This CPU is a Russian copy of the original 8080. Thanks to 
+Viacheslav Slavinsky who forwarded the results to me, and provided some 
+helpful advice.</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(2)</td>
+								<td>Intel<br>D8085AH-1</td>
+								<td>MdntTrain aka js@cimmeri.com</td>
+								<td>Due to time constraints the long ALUOP &lt;B,C,D,E,H,L,M,A&gt; test was not run.</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8085EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(3)</td>
+								<td>Intel<br>P8080A</td>
+								<td>MdntTrain aka js@cimmeri.com</td>
+								<td>Due to time constraints the long ALUOP &lt;B,C,D,E,H,L,M,A&gt; test was not run.</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(4)</td>
+								<td>Nat. Semi.<br>INS8080A</td>
+								<td>Alexis</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(5)</td>
+								<td>TI<br>TMS8080AJL</td>
+								<td>Eric Smith</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(6)</td>
+								<td>AMD<br>9080A</td>
+								<td>Alexander Demin (3 chips)</td>
+								<td>Alexander has looked at the two tests that differ and has 
+tracked it down to AMD implementing the ANA/ANI instructions as Intel 
+originally intended - the flag settings now matching the ones produced 
+by the ORA and XRA instructions.</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(7)</td>
+								<td>AMD<br>8080A</td>
+								<td>Alexander Demin</td>
+								<td>AMD chip - as (6)</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX2.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(8)</td>
+								<td>Nat. Semi.<br>8080AN</td>
+								<td>Alexander Demin (2 chips)</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(9)</td>
+								<td>INTEL<br>8080A</td>
+								<td>Alexander Demin (4 chips)</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(10)</td>
+								<td>KR<br>58080A</td>
+								<td>Alexander Demin (4 chips)</td>
+								<td>Russian clone</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(11)</td>
+								<td>NEC<br>8080A</td>
+								<td>Alexander Demin (2 chips)</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(11)</td>
+								<td>Samsung<br>8080</td>
+								<td>Alexander Demin</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(12)</td>
+								<td>Telsa<br>8080A</td>
+								<td>Alexander Demin</td>
+								<td>Czechoslovakian clone</td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+							<tr>
+								<td>(13)</td>
+								<td>Texas Inst.<br>8080A</td>
+								<td>Alexander Demin</td>
+								<td></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.MAC">mac</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.COM">com</a></td>
+								<td><a href="https://web.archive.org/web/20151006085348/http://www.idb.me.uk/sunhillow/files/8080EX1.HEX">hex</a></td>
+							</tr>
+						</tbody></table>
+					</td>
+				</tr>
+			</tbody></table>
+			
+			<p>Grateful thanks to those listed above for providing results and advice.</p>
+			<p>The download links in the above table lead to copies of the 
+original exerciser files that have had the appropriate CRC values 
+inserted in them.  When you run the exerciser it will then report "OK" 
+for tests that result in the correct CRC value.  It makes it a lot 
+easier to spot any errors!</p>
+			<p>For more information about Alexander Demins 8080 CPU collection see <a href="https://web.archive.org/web/20151006085348/http://demin.ws/blog/english/2012/12/24/my-i8080-collection/">his blog.</a></p>
+
+			<h2>More Results Needed</h2>
+			<p>Results for other CPU hardware versions are still needed, so if 
+you have a system with an 8080 or 8085 CPU the please consider running 
+the basic emulator and forwarding the results to me; it really would be 
+appreciated.  Apart from the help it would provide to emulator writers 
+it would be nice, even at this late stage, to document some of the 
+differences between the various implementations of the 8080 and 8085 
+CPUs.</p>
+		</div>
+	
+		<div>
+			<hr>
+			<img src="8080exer_files/email.png" alt="email address">
+			<br>
+			<a href="https://web.archive.org/web/20151006085348/http://validator.w3.org/check?uri=referer"><img src="8080exer_files/valid-xhtml11-blue.png" alt="Valid XHTML 1.1" width="88" height="31"></a>
+			<a href="https://web.archive.org/web/20151006085348/http://jigsaw.w3.org/css-validator/check/referer"><img src="8080exer_files/vcss-blue.gif" alt="Valid CSS!"></a>
+		</div>
+	
+
+
+
+
+</body></html>
