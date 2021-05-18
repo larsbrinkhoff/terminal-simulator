@@ -1,5 +1,7 @@
 # Simulation of the VT100 hardware
 
+[![Build](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml/badge.svg)](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml)
+
 ### About
 
 This is a software simulation of the VT100 hardware.  The original
