@@ -1,11 +1,14 @@
 #include "vt100.h"
 
-static int columns;
+int columns;
+int reverse_field;
+int underline;
 static int hertz;
 static int interlace;
 static u8 line_buffer[137];
-static int line_scroll;
+int line_scroll;
 static u8 line_attr;
+extern SDL_SpinLock lock_update;
 
 static void refresh (void);
 static EVENT (refresh_event, refresh);
@@ -16,47 +19,55 @@ static u8 video_a2_in (u8 port)
   return 0;
 }
 
+static void set_scroll (u8 x)
+{
+  SDL_AtomicLock(&lock_update);
+  line_scroll = x;
+  updatebuf = 1;
+  SDL_AtomicUnlock(&lock_update);
+}
+
 static void video_a2_out (u8 port, u8 data)
 {
   switch (data & 0x0F) {
   case 0x00:
-    line_scroll = (line_scroll & 0x0C) | 0x00;
+    set_scroll ((line_scroll & 0x0C) | 0x00);
     LOG (VID, "Load low order scroll latch 00");
     break;
   case 0x01:
-    line_scroll = (line_scroll & 0x0C) | 0x01;
+    set_scroll ((line_scroll & 0x0C) | 0x01);
     LOG (VID, "Load low order scroll latch 01");
     break;
   case 0x02:
-    line_scroll = (line_scroll & 0x0C) | 0x02;
+    set_scroll ((line_scroll & 0x0C) | 0x02);
     LOG (VID, "Load low order scroll latch 10");
     break;
   case 0x03:
-    line_scroll = (line_scroll & 0x0C) | 0x03;
+    set_scroll ((line_scroll & 0x0C) | 0x03);
     LOG (VID, "Load low order scroll latch 11");
     break;
   case 0x04:
-    line_scroll = (line_scroll & 0x03) | 0x00;
+    set_scroll ((line_scroll & 0x03) | 0x00);
     LOG (VID, "Load high order scroll latch 00");
     break;
   case 0x05:
-    line_scroll = (line_scroll & 0x03) | 0x04;
+    set_scroll ((line_scroll & 0x03) | 0x04);
     LOG (VID, "Load high order scroll latch 01");
     break;
   case 0x06:
-    line_scroll = (line_scroll & 0x03) | 0x08;
+    set_scroll ((line_scroll & 0x03) | 0x08);
     LOG (VID, "Load high order scroll latch 10");
     break;
   case 0x07:
-    line_scroll = (line_scroll & 0x03) | 0x0C;
+    set_scroll ((line_scroll & 0x03) | 0x0C);
     LOG (VID, "Load high order scroll latch 11");
     break;
   case 0x08: LOG (VID, "Toggle blink flip-flop"); break;
   case 0x09: clear_interrupt (4); break;
-  case 0x0A: LOG (VID, "Set reverse field on"); break;
-  case 0x0B: LOG (VID, "Set reverse field off"); break;
-  case 0x0C: LOG (VID, "Set basic attribute to underline"); break;
-  case 0x0D: LOG (VID, "Set basic attribute to reverse video"); break;
+  case 0x0A: reverse_field = 1; LOG (VID, "Set reverse field on"); break;
+  case 0x0B: reverse_field = 0; LOG (VID, "Set reverse field off"); break;
+  case 0x0C: underline = 1; LOG (VID, "Set basic attribute to underline"); break;
+  case 0x0D: underline = 0; LOG (VID, "Set basic attribute to reverse video"); break;
   case 0x0E:
   case 0x0F: LOG (VID, "Reserved"); break;
   }
@@ -76,6 +87,7 @@ static void video_c2_out (u8 port, u8 data)
   case 0x20: hertz = 60; interlace = 0; break;
   case 0x30: hertz = 50; interlace = 0; break;
   }
+  updatebuf = 1;
 }
 
 static u16 video_line (int n, u16 addr)
@@ -148,6 +160,8 @@ int video (void *arg)
 {
   register_port (0xA2, video_a2_in, video_a2_out);
   register_port (0xC2, video_c2_in, video_c2_out);
+  reverse_field = 0;
+  underline = 0;
   columns = 80;
   hertz = 60;
   interlace = 0;

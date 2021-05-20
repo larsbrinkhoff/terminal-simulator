@@ -83,4 +83,5 @@ void reset (void)
   reset_video ();
   reset_keyboard ();
   reset_sound ();
+  reset_render ();
 }

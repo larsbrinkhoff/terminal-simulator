@@ -1,6 +1,6 @@
 #include "vt100.h"
 
-u8 brightness;
+u8 brightness = 0x10;
 
 static u8 flags_in (u8 port)
 {
@@ -24,8 +24,11 @@ static u8 flags_in (u8 port)
 
 static void brightness_out (u8 port, u8 data)
 {
+  if (data == brightness)
+    return;
+  LOG (BRIGHT, "OUT %02X", data);
   brightness = data;
-  //LOG (BRIGHT, "OUT %02X", data);
+  updaterender = 1;
 }
 
 void reset_brightness (void)

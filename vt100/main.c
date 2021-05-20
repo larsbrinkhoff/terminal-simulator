@@ -41,12 +41,12 @@ SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Texture *screentex;
 const u8 *keystate;
-u8 fb[TERMHEIGHT + 1][TERMWIDTH];
+u8 fb[TERMHEIGHT + 1][137];
 u8 a[TERMHEIGHT + 1];
 int curx, cury;
 u32 userevent;
 int updatebuf = 1;
-int updatescreen = 1;
+int updaterender = 1;
 int blink;
 int arrows = 0;
 int rerun = 0;
@@ -137,7 +137,7 @@ draw_line (int scroll, int attr, int y, u8 *data)
   if ((attr | scroll) != a[y] || memcmp (data, fb[y], 80) != 0) {
     SDL_AtomicLock(&lock_update);
     a[y] = attr | scroll;
-    for (i = 0; i < 80; i++)
+    for (i = 0; i < 132; i++)
       fb[y][i] = data[i];
     updatebuf = 1;
     SDL_AtomicUnlock(&lock_update);
@@ -147,74 +147,56 @@ draw_line (int scroll, int attr, int y, u8 *data)
 void
 checkupdate (void)
 {
-	SDL_Event ev;
-	int flag;
-	SDL_AtomicLock(&lock_update);
-	flag = updatebuf;
-	SDL_AtomicUnlock(&lock_update);
-	if (!flag)
-		return;
-	memset(&ev, 0, sizeof(ev));
-	ev.type = userevent;
-	SDL_PushEvent(&ev);
+  SDL_Event ev;
+  int flag;
+  SDL_AtomicLock(&lock_update);
+  flag = updatebuf;
+  SDL_AtomicUnlock(&lock_update);
+  if (!flag)
+    return;
+  memset(&ev, 0, sizeof(ev));
+  ev.type = userevent;
+  SDL_PushEvent(&ev);
 }
 
 void
 draw(void)
 {
-	int w;
-	int x, y, c;
-	SDL_Rect r, r2;
-	r.x = 0;
-	r.y = 0;
-	r.w = TEXW;
-	r.h = TEXH;
-	r2.x = 0;
-	r2.w = TEXW;
+  extern int line_scroll;
+  int scroll;
+  int x, xx, y, yy;
 
-	SDL_AtomicLock(&lock_update);
-	if(updatebuf){
-		updatebuf = 0;
+  SDL_AtomicLock(&lock_update);
+  if (updaterender) {
+    updaterender = 0;
+    reset_render ();
+  }
 
-		SDL_SetRenderTarget(renderer, screentex);
-		SDL_SetRenderDrawColor(renderer, 21, 13, 6, 0);
-		SDL_RenderClear(renderer);
-		for(y = 0; y < TERMHEIGHT; y++) {
-			if ((a[y] & 0x60) == 0x60)
-				w = 1;
-			else
-				w = 2;
-			switch(a[y] & 0x60) {
-			case 0x00:
-				r2.y = TEXH/2;
-				r2.h = TEXH/2;
-				break;
-			case 0x20:
-				r2.y = 0;
-				r2.h = TEXH/2;
-				break;
-			default:
-				r2.y = 0;
-				r2.h = TEXH;
-				break;
-			}
-			for(x = 0; x < TERMWIDTH/w; x++){
-				c = fb[y][x];
-				r.x = 2 + w*x*CWIDTH - BLURRADIUS;
-				r.y = (2 + y*CHEIGHT)*2 - BLURRADIUS;
-				r.w = TEXW * w;
-				SDL_RenderCopy(renderer, fonttex[c], &r2, &r);
-			}
-		}
-		SDL_SetRenderTarget(renderer, nil);
-		updatescreen = 1;
+  if(updatebuf) {
+    updatebuf = 0;
+
+    SDL_SetRenderTarget(renderer, screentex);
+    SDL_RenderClear(renderer);
+    scroll = line_scroll;
+    for(y = yy = 0; y < 240; y++) {
+      for(x = xx = 0; xx < 792; x++)
+	xx = render_video (xx, y, fb[yy][x], (a[yy] & 0x60) != 0x60, scroll);
+      if ((a[yy] & 0x40) == 0x40 || (y & 1)) {
+	scroll++;
+	if (scroll == ((a[yy] & 0x60) == 0x20 ? 5 : 10)) {
+	  yy++;
+	  if ((a[yy] & 0x60) == 0)
+	    scroll = 5;
+	  else
+	    scroll = 0;
 	}
-	SDL_AtomicUnlock(&lock_update);
-	if(updatescreen){
-		updatescreen = 0;
-		SDL_RenderCopy(renderer, screentex, nil, nil);
-		SDL_RenderPresent(renderer);
-	}
+      }
+    }
+    SDL_SetRenderTarget(renderer, nil);
+    SDL_RenderCopy(renderer, screentex, nil, nil);
+    SDL_RenderPresent(renderer);
+  }
+  SDL_AtomicUnlock(&lock_update);
 }
 
 void
@@ -550,9 +532,6 @@ main(int argc, char *argv[])
 #endif
 				break;
 			default:
-				/* redraw */
-				updatescreen = 1;
-				draw();
 				break;
 			}
 			break;

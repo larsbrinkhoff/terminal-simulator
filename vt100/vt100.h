@@ -30,6 +30,7 @@ extern u8 vt100rom[];
 extern u8 vt100font[];
 extern void draw_line (int scroll, int attr, int y, u8 *data);
 extern void checkupdate (void);
+extern int updaterender;
 
 extern void cpu_state (u16 *sp, u8 *regs);
 extern void cpu_reset (void);
@@ -60,7 +61,9 @@ extern void reset_video (void);
 extern int video (void *arg);
 extern int event (void *arg);
 extern int timer (void *arg);
-void reset_sound (void);
+extern void reset_sound (void);
+extern void reset_render (void);
+extern int render_video (int x, int y, int c, int wide, int scroll);
 
 extern void nvr_clock (void);
 extern void key_down (u8 code);
