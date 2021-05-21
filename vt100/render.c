@@ -1,42 +1,69 @@
+#include <SDL.h>
 #include "vt100.h"
+#include "xsdl.h"
+
+/* Inputs:
+   fb[]
+   a[]
+   brightness
+   columns;
+   reverse_field;
+   underline;
+   wide
+   scroll */
 
 extern SDL_Renderer *renderer;
 
-SDL_Texture *scanline[1024];
+static u32 scanline[1024][10];
 
-extern u8 brightness;
-
-static void data (u32 *raster, int width, unsigned pixels)
+static void data (u32 *raster, int width, unsigned pixels, struct draw *data)
 {
   int size = width * sizeof (u32);
   u32 lit;
   unsigned mask;
   int i;
-  u32 x = brightness;
+  u32 x = data->brightness;
   x = 255 * (31 - (x & 0x1F)) / 31;
-  lit = x << 24 | x << 16 | x << 8 | 0xFF;
+  lit = x << 16 | x << 8 | x;
   memset (raster, 0, size);
   for (i = 0, mask = (1 << (width - 1)); i < width; i++, mask >>= 1) {
     if (pixels & mask)
       raster[i] = lit;
+   }
+  if (data->columns == 132) {
+    SDL_Texture *tex1 = SDL_CreateTexture (renderer,
+                                           SDL_PIXELFORMAT_RGBA8888,
+                                           SDL_TEXTUREACCESS_STATIC,
+                                           9, 1);
+    SDL_Texture *tex2 = SDL_CreateTexture (renderer,
+                                           SDL_PIXELFORMAT_RGBA8888,
+                                           SDL_TEXTUREACCESS_TARGET,
+                                           6, 1);
+    SDL_Rect r1, r2;
+    r1.x = r1.y = 0;
+    r1.w = 9;
+    r1.h = 1;
+    SDL_UpdateTexture (tex1, &r1, raster, 9 * sizeof (u32));
+    SDL_SetRenderTarget (renderer, tex2);
+    r2.x = r1.y = 0;
+    r2.w = 6;
+    r2.h = 1;
+    SDL_RenderCopy (renderer, tex1, &r1, &r2);
+    memset (raster, 0, 10 * sizeof (u32));
+    SDL_RenderReadPixels (renderer, &r2, SDL_PIXELFORMAT_RGBA8888,
+                          raster, 6 * sizeof (u32));
+    SDL_SetRenderTarget (renderer, NULL);
+    SDL_DestroyTexture (tex1);
+    SDL_DestroyTexture (tex2);
   }
 }
 
-void render (int width, SDL_Renderer *renderer)
+void render (struct draw *x)
 {
-  int size = width * sizeof (u32);
+  int width = x->columns == 80 ? 10 : 9;
   unsigned i;
-  u32 *raster;
-  for (i = 0; i < (1 << width); i++) {
-    raster = malloc (size);
-    data (raster, width, i);
-    if (scanline[i] == NULL)
-      scanline[i] = SDL_CreateTexture (renderer, SDL_PIXELFORMAT_RGBA8888,
-                                       SDL_TEXTUREACCESS_STATIC, width, 1);
-    SDL_SetTextureBlendMode (scanline[i], SDL_BLENDMODE_ADD);
-    SDL_UpdateTexture (scanline[i], NULL, raster, size);
-    free (raster);
-  }
+  for (i = 0; i < (1 << width); i++)
+    data (scanline[i], width, i, x);
 }
 
 static unsigned widen (unsigned pixels, unsigned mask1, unsigned mask2)
@@ -51,26 +78,17 @@ static unsigned widen (unsigned pixels, unsigned mask1, unsigned mask2)
   return result;
 }
 
-extern int columns;
-extern int reverse_field;
-extern int underline;
-
-int render_80 (int x, int y, int c, int wide, int scroll)
+static u8 * render_80 (u8 *dest, int c, int wide, int scroll, struct draw *data)
 {
-  SDL_Rect r;
   unsigned pixels, reverse = 0;
-  r.x = x;
-  r.y = 2 * y;
-  r.w = 10;
-  r.h = 1;
   pixels = vt100font[16 * (c & 0x7F) + scroll];
   if (c & 0x80) {
-    if (underline)
+    if (data->underline)
       pixels = scroll == 8 ? 0xFF : pixels;
     else
       reverse = wide ? 0xFFFFF : 0x3FF;
   }
-  if (reverse_field)
+  if (data->reverse)
     reverse ^= wide ? 0xFFFFF : 0x3FF;
   pixels <<= 2;
   if (pixels & 4)
@@ -80,58 +98,57 @@ int render_80 (int x, int y, int c, int wide, int scroll)
     pixels = widen (pixels, 0x200, 0xC0000);
   pixels ^= reverse;
   if (wide) {
-    SDL_RenderCopy (renderer, scanline[pixels >> 10], NULL, &r);
-    r.x += 10;
+    SDL_memcpy (dest, scanline[pixels >> 10], 10 * sizeof (u32));
+    dest += 10 * sizeof (u32);
   }
-  SDL_RenderCopy (renderer, scanline[pixels & 0x3FF], NULL, &r);
-  r.x += 10;
-  return r.x;
+  SDL_memcpy (dest, scanline[pixels & 0x3FF], 10 * sizeof (u32));
+  dest += 10 * sizeof (u32);
+  return dest;
 }
 
-static SDL_Rect r132 = { 1, 0, 9, 1 };
-
-int render_132 (int x, int y, int c, int wide, int scroll)
+static u8 * render_132 (u8 *dest, int c, int wide, int scroll, struct draw *data)
 {
-  SDL_Rect r;
   unsigned pixels, reverse = 0;
-  r.x = x;
-  r.y = 2 * y;
-  r.w = 6;
-  r.h = 1;
   pixels = vt100font[16 * (c & 0x7F) + scroll];
   if (c & 0x80) {
-    if (underline)
+    if (data->underline)
       pixels = scroll == 8 ? 0xFF : pixels;
     else
       reverse = wide ? 0x3FFFF : 0x1FF;
   }
-  if (reverse_field)
+  if (data->reverse)
     reverse ^= wide ? 0x3FFFF : 0x1FF;
   pixels <<= 1;
   if (pixels & 2)
     pixels |= 1;
   pixels |= pixels >> 1;
   if (wide)
-    pixels = widen (pixels, 0x100, 0x30000);
+    pixels = widen (pixels, 0x200, 0xC0000);
   pixels ^= reverse;
   if (wide) {
-    SDL_RenderCopy (renderer, scanline[pixels >> 9], &r132, &r);
-    r.x += 6;
+    SDL_memcpy (dest, scanline[pixels >> 9], 6 * sizeof (u32));
+    dest += 6 * sizeof (u32);
   }
-  SDL_RenderCopy (renderer, scanline[pixels & 0x1FF], &r132, &r);
-  r.x += 6;
-  return r.x;
+  SDL_memcpy (dest, scanline[pixels & 0x1FF], 6 * sizeof (u32));
+  dest += 6 * sizeof (u32);
+  return dest;
 }
 
-int render_video (int x, int y, int c, int wide, int scroll)
+u8 * render_video (u8 *dest, int c, int wide, int scroll, void *data)
 {
-  if (columns == 80)
-    return render_80 (x, y, c, wide, scroll);
+  if (((struct draw *)data)->columns == 80)
+    return render_80 (dest, c, wide, scroll, data);
   else
-    return render_132 (x, y, c, wide, scroll);
+    return render_132 (dest, c, wide, scroll, data);
 }
 
-void reset_render (void)
+void reset_render (void *data)
 {
-  render (10, renderer);
+  struct draw x;
+  if (data == NULL) {
+    x.brightness = 0x10;
+    x.columns = 80;
+    data = &x;
+  }
+  render (data);
 }

@@ -1,4 +1,7 @@
+#include <SDL.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <sys/select.h>
 #include "vt100.h"
@@ -1093,6 +1096,5 @@ void ddt (void)
   radix = 16;
   prefix = infix = -1;
   clear_breakpoints ();
-  reset ();
-  SDL_CreateThread (thread, "DDT", NULL);
+  SDL_CreateThread (thread, "vt100: DDT", NULL);
 }

@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include "vt100.h"
 
 static SDL_AudioDeviceID dev;

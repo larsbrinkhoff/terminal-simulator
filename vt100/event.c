@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include "vt100.h"
 
 static struct event head = { 0ULL, "(head)", NULL, NULL };

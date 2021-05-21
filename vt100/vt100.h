@@ -1,6 +1,21 @@
+#include <stdio.h>
 #include <stdint.h>
-#include <SDL.h>
-#include "terminal.h"
+
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t u8;
+
+#define TERMWIDTH 80
+#define TERMHEIGHT 24
+
+#define CWIDTH 10
+#define CHEIGHT 10
+
+#define FBWIDTH (TERMWIDTH*CWIDTH+2)
+#define FBHEIGHT (TERMHEIGHT*CHEIGHT+2)
+
+#define WIDTH  (FBWIDTH)
+#define HEIGHT (2*FBHEIGHT)
 
 #define RST0 0xC7
 #define RST1 0xCF
@@ -25,12 +40,10 @@ extern u8 memory[0x10000];
 extern u16 starta;
 extern unsigned long long get_cycles (void);
 extern u8 vt100_flags;
+extern int pty;
 
 extern u8 vt100rom[];
 extern u8 vt100font[];
-extern void draw_line (int scroll, int attr, int y, u8 *data);
-extern void checkupdate (void);
-extern int updaterender;
 
 extern void cpu_state (u16 *sp, u8 *regs);
 extern void cpu_reset (void);
@@ -40,6 +53,7 @@ extern void ddt (void);
 extern void (*halt) (u16 addr);
 extern u8 mtype[];
 
+extern u8 flags_in (u8 port);
 extern void bell (void);
 extern void reset_keyboard (void);
 extern void reset (void);
@@ -58,12 +72,11 @@ extern void pusart_rx (u8 data);
 extern void reset_brightness (void);
 extern void reset_nvr (void);
 extern void reset_video (void);
-extern int video (void *arg);
 extern int event (void *arg);
 extern int timer (void *arg);
 extern void reset_sound (void);
-extern void reset_render (void);
-extern int render_video (int x, int y, int c, int wide, int scroll);
+extern void reset_render (void *);
+extern u8 *render_video (u8 *dest, int c, int wide, int scroll, void *);
 
 extern void nvr_clock (void);
 extern void key_down (u8 code);
@@ -80,3 +93,4 @@ extern void logger (const char *device, const char *format, ...);
 extern void events (unsigned cycles);
 extern void add_event (unsigned cycles, struct event *event);
 extern void print_events (FILE *);
+extern void mkpty (char **cmd, int th, int tw, int fw, int fh);

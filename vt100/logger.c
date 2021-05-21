@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include <stdarg.h>
 #include "vt100.h"
 

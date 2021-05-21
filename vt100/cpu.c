@@ -1,3 +1,5 @@
+#include <string.h>
+#include <stdlib.h>
 #include "vt100.h"
 
 static unsigned long long cycles;

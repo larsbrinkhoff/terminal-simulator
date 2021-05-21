@@ -1,4 +1,6 @@
+#include <SDL.h>
 #include <time.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
 #include "vt100.h"
@@ -37,6 +39,7 @@
 static u8 rx_baud;
 static u8 tx_baud;
 static u8 tx_shift;
+static SDL_atomic_t rx_shift;
 static u8 rx_data;
 static u8 tx_data;
 static u8 cmd;
@@ -52,10 +55,12 @@ static float rate[16] = {
 static int rx_cycles_per_character;
 static int tx_cycles_per_character;
 
-static SDL_bool data_terminal_ready = 0;
+static SDL_bool data_terminal_ready;
 static SDL_mutex *dtr_lock = NULL;
 static SDL_cond *dtr_cond;
-static SDL_atomic_t rdy;
+static SDL_bool rdy;
+static SDL_mutex *rdy_lock = NULL;
+static SDL_cond *rdy_cond;
 
 static int csize (tcflag_t flags)
 {
@@ -182,8 +187,7 @@ static void decode_stop (int bit, int cycles)
     return;
   if (bit == 0)
     status |= ERR_FRAME;
-  else
-    pusart_rx (character);
+  pusart_rx (character);
   current_cycles -= data_cycles;
   decode_bit = decode_edge;
   decode_bit (bit, 0);
@@ -208,11 +212,12 @@ static int receiver (void *arg)
 
   dtr_lock = SDL_CreateMutex ();
   dtr_cond = SDL_CreateCond ();
-
-  if (baud)
-    slp.tv_nsec = 1000*1000*1000 / (baud/11);
+  rdy_lock = SDL_CreateMutex ();
+  rdy_cond = SDL_CreateCond ();
 
   terminal_settings (pty);
+  slp.tv_sec = 0;
+  slp.tv_nsec = 1000*1000*1000 / (500/10);
 
   for (;;) {
     SDL_LockMutex (dtr_lock);
@@ -224,27 +229,59 @@ static int receiver (void *arg)
     stop_cycles = 288;
     char_size = 8;
 
-    if (read (pty, &c, 1) < 0){
-      if (rerun){
-        sleep (2);
-        spawn ();
-      }else{
-        exit (0);
-      }
-    }
+    if (read (pty, &c, 1) < 0)
+      exit (0);
+
     /* TEMPORARY HACK to avoid excessive overruns. */
-    while (SDL_AtomicGet (&rdy))
-      ;
+    SDL_LockMutex (rdy_lock);
+    while (rdy)
+      SDL_CondWait (rdy_cond, rdy_lock);
+    SDL_UnlockMutex (rdy_lock);
     //pusart_rx (c);
     encode_character (c);
 
-    if (baud)
-      nanosleep (&slp, NULL);
+    //nanosleep (&slp, NULL);
   }
+}
+
+void set_rdy (SDL_bool x)
+{
+  if (rdy_lock == NULL)
+    return;
+  SDL_LockMutex (rdy_lock);
+  rdy = x;
+  if (!rdy)
+    SDL_CondSignal (rdy_cond);
+  SDL_UnlockMutex (rdy_lock);
+}
+
+static void rx_check (void);
+static EVENT (rx_event, rx_check);
+
+static void rx_check (void)
+{
+  int data = SDL_AtomicGet (&rx_shift);
+  logger ("RX", "Checking for incoming: %d", data);
+  if (data == -1) {
+    add_event (1000, &rx_event);
+    return;
+  }
+
+  if (status & RX_RDY) {
+    LOG (UART, "RX overrun"); 
+    status |= ERR_ORUN;
+  }
+
+  rx_data = data;
+  status |= RX_RDY;
+  SDL_AtomicSet (&rx_shift, -1); 
+  set_rdy (1);
+  raise_interrupt (2);
 }
 
 void pusart_rx (u8 data)
 {
+#if 1
   if ((cmd & RX_ENABLE) == 0) {
     LOG (UART, "RX character %02X (discarded)", data); 
     return;
@@ -259,8 +296,11 @@ void pusart_rx (u8 data)
 
   rx_data = data;
   status |= RX_RDY;
-  SDL_AtomicSet (&rdy, 1);
+  set_rdy (1);
   raise_interrupt (2);
+#else
+  SDL_AtomicSet (&rx_shift, data);
+#endif
 }
 
 static u8 pusart_in_data (u8 port)
@@ -268,7 +308,8 @@ static u8 pusart_in_data (u8 port)
   LOG (UART, "IN rx data %02X", rx_data); 
   clear_interrupt (2);
   status &= ~RX_RDY;
-  SDL_AtomicSet (&rdy, 0);
+  set_rdy (0);
+  //add_event (rx_cycles_per_character, &rx_event);
   return rx_data;
 }
 
@@ -286,7 +327,7 @@ static void tx_start (void)
 
 static void tx_empty (void)
 {
-  sendchar (tx_shift);
+  write (pty, &tx_shift, 1);
   if (status & TX_RDY)
     status |= TX_EMPTY;
   else
@@ -295,13 +336,13 @@ static void tx_empty (void)
 
 void set_dtr (SDL_bool dtr)
 {
-	if (dtr_lock == NULL)
-		return;
-	SDL_LockMutex (dtr_lock);
-	data_terminal_ready = dtr;
-	if (dtr)
-	  SDL_CondSignal(dtr_cond);
-	SDL_UnlockMutex (dtr_lock);
+  if (dtr_lock == NULL)
+    return;
+  SDL_LockMutex (dtr_lock);
+  data_terminal_ready = dtr;
+  if (dtr)
+    SDL_CondSignal(dtr_cond);
+  SDL_UnlockMutex (dtr_lock);
 }
 
 static void command (u8 data)
@@ -427,8 +468,11 @@ static u8 modem_in (u8 port)
 
 void reset_pusart (void)
 {
-  SDL_AtomicSet (&rdy, 0);
-  SDL_CreateThread (receiver, "PUSART receiver", NULL);
+  SDL_AtomicSet (&rx_shift, -1);
+  //rx_check ();
+  data_terminal_ready = SDL_FALSE;
+  rdy = SDL_FALSE;
+  SDL_CreateThread (receiver, "vt100: RX", NULL);
   register_port (0x00, pusart_in_data, pusart_out_data);
   register_port (0x01, pusart_in_status, pusart_out_command);
   register_port (0x02, no_in, baud_out);
