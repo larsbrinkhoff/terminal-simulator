@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include "vt100.h"
 
 static SDL_AudioDeviceID dev;
@@ -79,7 +80,9 @@ void reset_sound (void)
 
   dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
   if (dev == 0) {
-    return;
+    LOG (SND, "Could not open an audio device.");
+    LOG (SND, "For now, audio is needed to synchronize simulated time against real time.");
+    exit (1);
   }
   
   if (have.format != want.format)

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <string.h>
 #include "vt100.h"
 
 u8 memory[0x10000];
@@ -25,6 +27,26 @@ void clear_interrupt (int mask)
     interrupt (RST0 | imask << 3);
   else
     interrupt (-1);
+}
+
+u8 flags_in (u8 port)
+{
+  // 0 xmit flag H
+  // 1 advance video L
+  // 2 graphics L
+  // 3 option present H
+  // 4 even field L
+  // 5 nvr data H
+  // 6 LBA7 H
+  // 7 keyboard H
+  u8 old = vt100_flags & 0x40;
+  vt100_flags &= ~0x40;
+  if ((get_cycles () / 200) & 1)
+    vt100_flags |= 0x40;
+  if (!old && (vt100_flags & 0x40))
+    nvr_clock ();
+  //LOG (FLAGS, "IN %02X", vt100_flags); 
+  return vt100_flags;
 }
 
 void register_port (u8 port, u8 (*in) (u8), void (*out) (u8, u8))
@@ -76,6 +98,8 @@ void reset (void)
   mtype[9] = 0;
   mtype[10] = 0;
 
+  vt100_flags = 0x06; //No AVO or graphics option.
+
   reset_brightness ();
   reset_pusart ();
   reset_nvr ();
@@ -83,5 +107,4 @@ void reset (void)
   reset_video ();
   reset_keyboard ();
   reset_sound ();
-  reset_render ();
 }

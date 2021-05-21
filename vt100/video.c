@@ -1,14 +1,15 @@
 #include "vt100.h"
+#include "xsdl.h"
 
-int columns;
-int reverse_field;
-int underline;
+static int columns;
+static u8 brightness = 0x10;
+static int reverse_field;
+static int underline;
 static int hertz;
 static int interlace;
 static u8 line_buffer[137];
-int line_scroll;
+static int line_scroll;
 static u8 line_attr;
-extern SDL_SpinLock lock_update;
 
 static void refresh (void);
 static EVENT (refresh_event, refresh);
@@ -21,10 +22,7 @@ static u8 video_a2_in (u8 port)
 
 static void set_scroll (u8 x)
 {
-  SDL_AtomicLock(&lock_update);
   line_scroll = x;
-  updatebuf = 1;
-  SDL_AtomicUnlock(&lock_update);
 }
 
 static void video_a2_out (u8 port, u8 data)
@@ -82,12 +80,25 @@ static u8 video_c2_in (u8 port)
 static void video_c2_out (u8 port, u8 data)
 {
   switch (data & 0x30) {
-  case 0x00: columns = 80; interlace = 1; break;
-  case 0x10: columns = 132; interlace = 1; break;
-  case 0x20: hertz = 60; interlace = 0; break;
-  case 0x30: hertz = 50; interlace = 0; break;
+  case 0x00:
+    columns = 80;
+    interlace = 1;
+    sdl_render (brightness, columns);
+    break;
+  case 0x10:
+    columns = 132;
+    interlace = 1;
+    sdl_render (brightness, columns);
+    break;
+  case 0x20:
+    hertz = 60;
+    interlace = 0;
+    break;
+  case 0x30:
+    hertz = 50;
+    interlace = 0;
+    break;
   }
-  updatebuf = 1;
 }
 
 static u16 video_line (int n, u16 addr)
@@ -130,19 +141,33 @@ static u16 video_line (int n, u16 addr)
   }
 }
 
+static struct draw draw_data;
+static unsigned fields;
+
 static void refresh (void)
 {
   int i;
   u16 addr;
 
   raise_interrupt (4);
+  add_event (2764800 / hertz, &refresh_event);
+
+  fields++;
+#if 0
+  if ((fields & 3) != 0)
+    return;
+#endif
+  //LOG (VID, "Refresh frame %d", frames);
 
   addr = 0x2000;
   for (i = 0; i < 27; i++)
     addr = video_line (i, addr);
   
-  checkupdate ();
-  add_event (2764800/hertz, &refresh_event);
+  draw_data.scroll = line_scroll;
+  draw_data.columns = columns;
+  draw_data.reverse = reverse_field;
+  draw_data.underline = underline;
+  sdl_refresh (&draw_data);
 }
 
 void reset_video (void)
@@ -150,29 +175,23 @@ void reset_video (void)
   register_port (0xA2, video_a2_in, video_a2_out);
   register_port (0xC2, video_c2_in, video_c2_out);
 
+  fields = 0;
   columns = 80;
   hertz = 60;
   interlace = 0;
   refresh ();
 }
 
-int video (void *arg)
+static void brightness_out (u8 port, u8 data)
 {
-  register_port (0xA2, video_a2_in, video_a2_out);
-  register_port (0xC2, video_c2_in, video_c2_out);
-  reverse_field = 0;
-  underline = 0;
-  columns = 80;
-  hertz = 60;
-  interlace = 0;
-  line_scroll = 0;
-  line_attr = 0x60;
+  if (data == brightness)
+    return;
+  LOG (BRIGHT, "OUT %02X", data);
+  brightness = data;
+  sdl_render (brightness, columns);
+}
 
-  SDL_Delay (1000);
-  for (;;) {
-    SDL_Delay (1000/hertz);
-    refresh ();
-  }
-
-  return 0;
+void reset_brightness (void)
+{
+  register_port (0x42, flags_in, brightness_out);
 }

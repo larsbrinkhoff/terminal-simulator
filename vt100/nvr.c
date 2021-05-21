@@ -1,3 +1,4 @@
+#include <string.h>
 #include "vt100.h"
 
 //ER1400 device.
