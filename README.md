@@ -21,3 +21,12 @@ The command line syntax is `vt100 [-f] [-D] [-R test] program`.
 
 <kbd>F9</kbd> is the SET-UP key.  See a [VT100 User
 Guide](https://vt100.net/docs/vt100-ug/chapter1.html) for instructions.
+
+### 3D Printed Model
+
+This simulator was inspired by Michael Gardi's 3D printed model, see his
+[instructions](https://www.instructables.com/23-Scale-VT100-Terminal-Reproduction/)
+and [GitHub files](https://github.com/kidmirage/2-3-Scale-VT100-Terminal-Reproduction).
+
+This is my printing progress so far:
+![VT100 3D print](https://user-images.githubusercontent.com/775050/119787447-80022a80-bed1-11eb-859a-4e9bcedda253.jpg)
