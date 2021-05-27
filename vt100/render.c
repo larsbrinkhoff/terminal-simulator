@@ -147,4 +147,5 @@ u8 * render_video (u8 *dest, int c, int wide, int scroll, void *data)
 void reset_render (void *data)
 {
   render (data);
+  free (data);
 }

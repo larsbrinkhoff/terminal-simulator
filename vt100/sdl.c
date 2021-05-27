@@ -75,21 +75,22 @@ void sdl_refresh (struct draw *data)
   SDL_Event ev;
   SDL_zero (ev);
   ev.type = userevent;
-  ev.user.data1 = data;
+  ev.user.data1 = malloc (sizeof (struct draw));
+  memcpy (ev.user.data1, data, sizeof (struct draw));
   SDL_PushEvent (&ev);
 }
 
-static struct draw draw_data;
-
 void sdl_render (int brightness, int columns)
 {
+  struct draw *data;
   SDL_Event ev;
-  draw_data.columns = columns;
-  draw_data.brightness = brightness;
-  draw_data.renderer = renderer;
+  data = malloc (sizeof (struct draw));
+  data->columns = columns;
+  data->brightness = brightness;
+  data->renderer = renderer;
   SDL_zero (ev);
   ev.type = userevent + 1;
-  ev.user.data1 = &draw_data;
+  ev.user.data1 = data;
   SDL_PushEvent (&ev);
 }
 
@@ -130,6 +131,7 @@ static void draw (struct draw *data)
   SDL_UnlockTexture (screentex);
   SDL_RenderCopy (renderer, screentex, NULL, NULL);
   SDL_RenderPresent (renderer);
+  free (data);
 }
 
 static void toggle_fullscreen (void)
@@ -141,17 +143,6 @@ static void toggle_fullscreen (void)
     SDL_ShowCursor (SDL_DISABLE);
   else
     SDL_ShowCursor (SDL_ENABLE);
-}
-
-static void mkwindow (SDL_Window **window, SDL_Renderer **renderer,
-		      char *title, int width, int height)
-{
-  if (SDL_CreateWindowAndRenderer (width, height, 0, window, renderer) < 0)
-    //panic("SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError ());
-    ;
-  SDL_SetWindowTitle (*window, title);
-  SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-  SDL_SetHint ("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
 }
 
 void sdl_capslock (u8 code)
@@ -172,8 +163,26 @@ static void nothing (void)
 
 void sdl_init (int scale, int full)
 {
+  SDL_DisplayMode mode;
+  struct draw *data;
+
   SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
-  mkwindow (&window, &renderer, "VT100", WIDTH*scale, HEIGHT*scale);
+
+  LOG (SDL, "Video displays: %d", SDL_GetNumVideoDisplays ());
+  SDL_GetCurrentDisplayMode (0, &mode);
+  LOG (SDL, "Refresh rate: %d Hz", mode.refresh_rate);
+
+  window = SDL_CreateWindow ("VT100",
+			     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+			     WIDTH*scale, HEIGHT*scale, 0);
+  if (window == NULL)
+    //panic("SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError ());
+    ;
+  renderer = SDL_CreateRenderer (window, -1,
+				 SDL_RENDERER_ACCELERATED |
+				 SDL_RENDERER_PRESENTVSYNC);
+  SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+  SDL_SetHint ("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
 
   SDL_Surface *icon = IMG_Load ("icon.jpg");
   if (icon != NULL) {
@@ -190,10 +199,11 @@ void sdl_init (int scale, int full)
 
   meta = nothing;
 
-  draw_data.brightness = 0x10;
-  draw_data.columns = 80;
-  draw_data.renderer = renderer;
-  reset_render (&draw_data);
+  data = malloc (sizeof (struct draw));
+  data->brightness = 0x10;
+  data->columns = 80;
+  data->renderer = renderer;
+  reset_render (data);
 }
 
 static int special_key (SDL_KeyboardEvent *ev)
