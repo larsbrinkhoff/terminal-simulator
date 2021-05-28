@@ -10,6 +10,55 @@ static u8 a[TERMHEIGHT + 1];
 static u8 capslock;
 static void (*meta) (void);
 
+static SDL_Window *sound_window = NULL;
+static SDL_Renderer *sound_renderer;
+static u8 sound_buffer[800];
+static int sound_pointer = 0;
+
+void sdl_sound (u8 *data, int size)
+{
+  SDL_Event ev;
+  SDL_zero (ev);
+  ev.type = userevent + 2;
+  ev.user.data1 = malloc (size);
+  ev.user.data2 = malloc (sizeof size);
+  memcpy (ev.user.data1, data, size);
+  *(int *)ev.user.data2 = size;
+  SDL_PushEvent (&ev);
+}
+
+static void draw_sound (u8 *data, int *size)
+{
+  int i;
+
+  if (sound_window == NULL) {
+    SDL_CreateWindowAndRenderer (sizeof sound_buffer, 256, 0,
+				 &sound_window, &sound_renderer);
+    SDL_SetWindowTitle (sound_window, "VT100 Sound");
+  }
+
+  SDL_SetRenderDrawColor (sound_renderer, 0, 0, 0, 255);
+  SDL_RenderClear (sound_renderer);
+  SDL_SetRenderDrawColor (sound_renderer, 0, 255, 0, 255);
+  for (i = 0; i < *size; i++) {
+    sound_buffer[sound_pointer] = data[i];
+    if (sound_buffer[sound_pointer] > 3)
+      sound_buffer[sound_pointer] -= rand() & 3;
+    sound_pointer++;
+    sound_pointer %= sizeof sound_buffer;
+  }
+  for (i = 0; i < sizeof sound_buffer; i++)
+    SDL_RenderDrawPoint (sound_renderer, i, 255 - sound_buffer[i]);
+  SDL_SetRenderDrawColor (sound_renderer, 100, 100, 100, 255);
+  for (i = 0; i < sizeof sound_buffer; i += 48)
+    SDL_RenderDrawLine (sound_renderer, i, 0, i, 255);
+  for (i = 0; i < 256; i += 48)
+    SDL_RenderDrawLine (sound_renderer, 0, i, sizeof sound_buffer - 1, i);
+  SDL_RenderPresent (sound_renderer);
+  free (data);
+  free (size);
+}
+
 void draw_line (int scroll, int attr, int y, u8 *data)
 {
   int i;
@@ -128,7 +177,7 @@ void sdl_init (int scale, int full)
     toggle_fullscreen ();
   screentex = SDL_CreateTexture (renderer, SDL_PIXELFORMAT_RGB888,
                                  SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
-  userevent = SDL_RegisterEvents (1);
+  userevent = SDL_RegisterEvents (3);
   memset (a, 0, sizeof a);
 
   meta = nothing;
@@ -286,6 +335,8 @@ void sdl_loop (void)
 	draw (ev.user.data1);
       else if (ev.type == userevent + 1)
 	reset_render (ev.user.data1);
+      else if (ev.type == userevent + 2)
+	draw_sound (ev.user.data1, ev.user.data2);
       break;
     }
   }
