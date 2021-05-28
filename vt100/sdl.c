@@ -7,6 +7,7 @@ static SDL_Texture *screentex;
 static u32 userevent;
 static u8 fb[TERMHEIGHT + 1][137];
 static u8 a[TERMHEIGHT + 1];
+static u8 capslock;
 
 void draw_line (int scroll, int attr, int y, u8 *data)
 {
@@ -91,8 +92,8 @@ static void toggle_fullscreen (void)
     SDL_ShowCursor (SDL_ENABLE);
 }
 
-void mkwindow (SDL_Window **window, SDL_Renderer **renderer,
-               char *title, int width, int height)
+static void mkwindow (SDL_Window **window, SDL_Renderer **renderer,
+		      char *title, int width, int height)
 {
   if (SDL_CreateWindowAndRenderer (width, height, 0, window, renderer) < 0)
     //panic("SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError ());
@@ -100,6 +101,11 @@ void mkwindow (SDL_Window **window, SDL_Renderer **renderer,
   SDL_SetWindowTitle (*window, title);
   SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_SetHint ("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
+}
+
+void sdl_capslock (u8 code)
+{
+  capslock = code;
 }
 
 void sdl_init (int scale, int full)
@@ -217,7 +223,7 @@ static u8 keymap (SDL_Scancode key) {
   case SDL_SCANCODE_LCTRL: return 0x7C;
   case SDL_SCANCODE_RSHIFT:
   case SDL_SCANCODE_LSHIFT: return 0x7D;
-  case SDL_SCANCODE_CAPSLOCK: return 0x7E;
+  case SDL_SCANCODE_CAPSLOCK: return capslock;
   default: return 0;
   }
 }
