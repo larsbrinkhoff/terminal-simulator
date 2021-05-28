@@ -8,17 +8,13 @@ static u32 userevent;
 static u8 fb[TERMHEIGHT + 1][137];
 static u8 a[TERMHEIGHT + 1];
 
-SDL_SpinLock lock_update;
-
 void draw_line (int scroll, int attr, int y, u8 *data)
 {
   int i;
   if ((attr | scroll) != a[y] || memcmp (data, fb[y], 80) != 0) {
-    SDL_AtomicLock(&lock_update);
     a[y] = attr | scroll;
     for (i = 0; i < 132; i++)
       fb[y][i] = data[i];
-    SDL_AtomicUnlock(&lock_update);
   }
 }
 
