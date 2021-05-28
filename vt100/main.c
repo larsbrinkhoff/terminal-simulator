@@ -121,9 +121,10 @@ int main (int argc, char **argv)
   int opt;
 
   halt = end;
+  sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "b:Br2fR:D")) != -1) {
+  while ((opt = getopt (argc, argv, "b:Br2fR:DC")) != -1) {
     switch (opt) {
     case 'B':
       /* Backspace is Rubout. */
@@ -139,6 +140,9 @@ int main (int argc, char **argv)
       break;
     case 'D':
       debug = 1;
+      break;
+    case 'C':
+      sdl_capslock (0x7C); //Make capslock into control.
       break;
     default:
       usage();

@@ -17,6 +17,7 @@ The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
 - `-f` enters full screen.  Toggle with <kbd>F11</kbd>.
 - `-D` enters a PDP-10 style DDT for debugging the firmware.
 - `-R test` runs a CP/M program; this is only for testing.
+- `-C` turns capslock into control.
 - `program/device` is any command to run as a child process providing I/O,
   or a character device assumed to be a serial port.
 
