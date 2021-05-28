@@ -22,6 +22,7 @@ The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
 
 <kbd>F9</kbd> is the SET-UP key.  See a [VT100 User
 Guide](https://vt100.net/docs/vt100-ug/chapter1.html) for instructions.
+<kbd>Control</kbd>+<kbd>F11</kbd> exits the simlator.
 
 ### 3D Printed Model
 

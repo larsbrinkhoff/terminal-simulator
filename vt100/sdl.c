@@ -121,7 +121,12 @@ void sdl_init (int scale, int full)
 static int special_key (SDL_Scancode key)
 {
   switch (key) {
-  case SDL_SCANCODE_F11: toggle_fullscreen (); return 1;
+  case SDL_SCANCODE_F11:
+    if (SDL_GetModState () & KMOD_CTRL)
+      exit (0);
+    else
+      toggle_fullscreen ();
+    return 1;
   default: return 0;
   }  
 }
