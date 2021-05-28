@@ -1,12 +1,97 @@
 #define _XOPEN_SOURCE 600
+#define _BSD_SOURCE
+#define _DARWIN_C_SOURCE
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <termios.h>
 #include "vt100.h"
 
 int pty;
-char *name;
+static struct termios saved;
+
+static int csize (tcflag_t flags)
+{
+  switch (flags & CSIZE) {
+  case CS5: return 5;
+  case CS6: return 6;
+  case CS7: return 7;
+  case CS8: return 8;
+  }
+  return -1;
+}
+
+static int get_baud (speed_t speed) {
+  switch (speed) {
+  case B0: return 0;
+  case B50: return 50;
+  case B75: return 75;
+  case B110: return 110;
+  case B134: return 134;
+  case B150: return 150;
+  case B200: return 200;
+  case B300: return 300;
+  case B600: return 600;
+  case B1200: return 1200;
+  case B1800: return 1800;
+  case B2400: return 2400;
+  case B4800: return 4800;
+  case B9600: return 9600;
+  case B19200: return 19200;
+  case B38400: return 38400;
+  case B57600: return 57600;
+  case B115200: return 115200;
+  case B230400: return 230400;
+  }
+  return -1;
+}
+
+static void restore_termios (void)
+{
+  tcsetattr (pty, TCSAFLUSH, &saved);
+}
+
+static void terminal_settings (int fd)
+{
+  if (tcgetattr (fd, &saved) == -1)
+    return;
+  LOG (UART, "tty input modes: "
+       "%cIGNBRK %cIGNPAR %cPARMRK %cINPCK %cISTRIP %cIXON %cIXOFF",
+       (saved.c_iflag & IGNBRK) ? '+' : '-',
+       (saved.c_iflag & IGNPAR) ? '+' : '-',
+       (saved.c_iflag & PARMRK) ? '+' : '-',
+       (saved.c_iflag & INPCK)  ? '+' : '-',
+       (saved.c_iflag & ISTRIP) ? '+' : '-',
+       (saved.c_iflag & IXON)   ? '+' : '-',
+       (saved.c_iflag & IXOFF)  ? '+' : '-');
+  LOG (UART, "tty control modes: "
+       "CS%d %cSTOPB %cPARENB %cPARODD %cCLOCAL %cCRTSCTS",
+       csize (saved.c_cflag),
+       (saved.c_cflag & CSTOPB) ? '+' : '-',
+       (saved.c_cflag & PARENB) ? '+' : '-',
+       (saved.c_cflag & PARODD) ? '+' : '-',
+       (saved.c_cflag & CLOCAL) ? '+' : '-',
+       (saved.c_cflag & CRTSCTS)? '+' : '-');
+  LOG (UART, "tty baud rates: %d %d",
+       get_baud (cfgetispeed (&saved)),
+       get_baud (cfgetospeed (&saved)));
+}
+
+static void raw (void)
+{
+  struct termios new;
+  atexit (restore_termios);
+  new = saved;
+  new.c_iflag = 0;
+  new.c_oflag = 0;
+  new.c_lflag = 0;
+  new.c_cc[VMIN] = 1;
+  new.c_cc[VTIME] = 0;
+  tcsetattr (pty, TCSAFLUSH, &new);
+}
 
 static void shell (char **cmd)
 {
@@ -22,40 +107,63 @@ static void spawn (char **cmd)
     exit (1);
 
   case 0:
-    close (pty);
     close (0);
     close (1);
     close (2);
 
     setsid ();
 
-    if (open (name, O_RDWR) != 0)
+    if (open (ptsname (pty), O_RDWR) != 0)
       exit (1);
+    close (pty);
     dup (0);
     dup (1);
     shell (cmd);
   }
 }
 
+static int mktty (char *device)
+{
+  struct stat st;
+  if (stat (device, &st) != 0)
+    return -1;
+  if ((st.st_mode & S_IFMT) != S_IFCHR)
+    return -1;
+  return open (device, O_RDWR);
+}
+
 void mkpty (char **cmd, int th, int tw, int fw, int fh)
 {
   struct winsize ws;
-
-  pty = posix_openpt (O_RDWR);
-  if (pty < 0 ||
-      grantpt (pty) < 0 ||
-      unlockpt (pty) < 0) {
-    logger ("PTY", "Couldn't allocate pty");
-    exit (1);
-  }
-
-  name = ptsname (pty);
 
   ws.ws_row = th;
   ws.ws_col = tw;
   ws.ws_xpixel = fw;
   ws.ws_ypixel = fh;
-  ioctl (pty, TIOCSWINSZ, &ws);
 
+  pty = -1;
+  if (cmd[1] == NULL)
+    pty = mktty (cmd[0]);
+  if (pty != -1) {
+    terminal_settings (pty);
+    raw ();
+    ioctl (pty, TIOCSWINSZ, &ws);
+    return;
+  }
+
+  pty = posix_openpt (O_RDWR);
+  if (pty < 0 ||
+      grantpt (pty) < 0 ||
+      unlockpt (pty) < 0) {
+    LOG (PTY, "Couldn't allocate pty");
+    exit (1);
+  }
+  terminal_settings (pty);
+  ioctl (pty, TIOCSWINSZ, &ws);
   spawn (cmd);
+}
+
+void send_break (void)
+{
+  tcsendbreak (pty, 0);
 }

@@ -1,7 +1,6 @@
 #include <SDL.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <termios.h>
 #include "vt100.h"
 
 // Intel 8251 USART.
@@ -60,68 +59,6 @@ static SDL_mutex *dtr_lock = NULL;
 static SDL_cond *dtr_cond;
 static SDL_mutex *rx_lock;
 static SDL_cond *rx_cond;
-
-static int csize (tcflag_t flags)
-{
-  switch (flags & CSIZE) {
-  case CS5: return 5;
-  case CS6: return 6;
-  case CS7: return 7;
-  case CS8: return 8;
-  }
-  return -1;
-}
-
-static int get_baud (speed_t speed) {
-  switch (speed) {
-  case B0: return 0;
-  case B50: return 50;
-  case B75: return 75;
-  case B110: return 110;
-  case B134: return 134;
-  case B150: return 150;
-  case B200: return 200;
-  case B300: return 300;
-  case B600: return 600;
-  case B1200: return 1200;
-  case B1800: return 1800;
-  case B2400: return 2400;
-  case B4800: return 4800;
-  case B9600: return 9600;
-  case B19200: return 19200;
-  case B38400: return 38400;
-  case B57600: return 57600;
-  case B115200: return 115200;
-  case B230400: return 230400;
-  }
-  return -1;
-}
-
-static void terminal_settings (int fd)
-{
-  struct termios tios;
-  if (tcgetattr (fd, &tios) == -1)
-    return;
-  LOG (PUSART, "tty input modes: "
-       "%cIGNBRK %cIGNPAR %cPARMRK %cINPCK %cISTRIP %cIXON %cIXOFF",
-       (tios.c_iflag & IGNBRK) ? '+' : '-',
-       (tios.c_iflag & IGNPAR) ? '+' : '-',
-       (tios.c_iflag & PARMRK) ? '+' : '-',
-       (tios.c_iflag & INPCK)  ? '+' : '-',
-       (tios.c_iflag & ISTRIP) ? '+' : '-',
-       (tios.c_iflag & IXON)   ? '+' : '-',
-       (tios.c_iflag & IXOFF)  ? '+' : '-');
-  LOG (PUSART, "tty control modes: "
-       "CS%d %cSTOPB %cPARENB %cPARODD %cCLOCAL %cCRTSCTS",
-       csize (tios.c_cflag),
-       (tios.c_cflag & CSTOPB) ? '+' : '-',
-       (tios.c_cflag & PARENB) ? '+' : '-',
-       (tios.c_cflag & PARODD) ? '+' : '-',
-       (tios.c_cflag & CLOCAL) ? '+' : '-',
-       (tios.c_cflag & CRTSCTS)? '+' : '-');
-  LOG (PUSART, "tty baud rates: %d %d",
-       get_baud (cfgetispeed (&tios)), get_baud (cfgetospeed (&tios)));
-}
 
 static void (*decode_bit) (int bit, int cycles);
 static int current_cycles;
@@ -212,8 +149,6 @@ static int receiver (void *arg)
 
   decode_bit = decode_edge;
   current_cycles = 0;
-
-  terminal_settings (pty);
 
   for (;;) {
     SDL_LockMutex (dtr_lock);
@@ -315,7 +250,7 @@ static void command (u8 data)
   }
   if (data & SBRK) {
     LOG (UART, "break", data);
-    tcsendbreak (pty, 0);
+    send_break ();
   }
   if (data & ERESET) {
     LOG (UART, "clear errors", data);

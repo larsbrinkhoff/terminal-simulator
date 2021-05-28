@@ -94,3 +94,4 @@ extern void events (unsigned cycles);
 extern void add_event (unsigned cycles, struct event *event);
 extern void print_events (FILE *);
 extern void mkpty (char **cmd, int th, int tw, int fw, int fh);
+extern void send_break (void);
