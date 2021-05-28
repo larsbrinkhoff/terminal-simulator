@@ -8,6 +8,7 @@ static u32 userevent;
 static u8 fb[TERMHEIGHT + 1][137];
 static u8 a[TERMHEIGHT + 1];
 static u8 capslock;
+static void (*meta) (void);
 
 void draw_line (int scroll, int attr, int y, u8 *data)
 {
@@ -108,6 +109,17 @@ void sdl_capslock (u8 code)
   capslock = code;
 }
 
+static void altmode (void)
+{
+  key_down (0x2A);
+  SDL_Delay (50);
+  key_up (0x2A);
+}
+
+static void nothing (void)
+{
+}
+
 void sdl_init (int scale, int full)
 {
   SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
@@ -119,22 +131,36 @@ void sdl_init (int scale, int full)
   userevent = SDL_RegisterEvents (1);
   memset (a, 0, sizeof a);
 
+  meta = nothing;
+
   draw_data.brightness = 0x10;
   draw_data.columns = 80;
   draw_data.renderer = renderer;
   reset_render (&draw_data);
 }
 
-static int special_key (SDL_Scancode key)
+static int special_key (SDL_KeyboardEvent *ev)
 {
-  switch (key) {
+  switch (ev->keysym.scancode) {
   case SDL_SCANCODE_F11:
+    if (ev->state != SDL_PRESSED)
+      return 1;
     if (SDL_GetModState () & KMOD_CTRL)
       exit (0);
     else
       toggle_fullscreen ();
     return 1;
-  default: return 0;
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+  case SDL_SCANCODE_LGUI:
+  case SDL_SCANCODE_RGUI:
+    switch (ev->state) {
+    case SDL_PRESSED: meta = altmode; break;
+    case SDL_RELEASED: meta = nothing; break;
+    }
+    return 1;
+  default:
+    return 0;
   }  
 }
 
@@ -241,14 +267,17 @@ void sdl_loop (void)
     case SDL_KEYDOWN:
       if (ev.key.repeat)
         break;
-      if (special_key (ev.key.keysym.scancode))
+      if (special_key (&ev.key))
         break;
       code = keymap (ev.key.keysym.scancode);
       if (code == 0)
         break;
+      meta ();
       key_down (code);
       break;
     case SDL_KEYUP:
+      if (special_key (&ev.key))
+        break;
       key_up (keymap (ev.key.keysym.scancode));
       break;
 
