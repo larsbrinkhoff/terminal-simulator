@@ -86,8 +86,13 @@ static void draw (struct draw *data)
 
 static void toggle_fullscreen (void)
 {
-  Uint32 flags = SDL_GetWindowFlags (window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
-  SDL_SetWindowFullscreen (window, flags ^ SDL_WINDOW_FULLSCREEN_DESKTOP);
+  Uint32 flags = SDL_GetWindowFlags (window);
+  flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  SDL_SetWindowFullscreen (window, flags);
+  if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
+    SDL_ShowCursor (SDL_DISABLE);
+  else
+    SDL_ShowCursor (SDL_ENABLE);
 }
 
 void mkwindow (SDL_Window **window, SDL_Renderer **renderer,
