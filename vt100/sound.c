@@ -1,19 +1,20 @@
 #include <SDL.h>
 #include "vt100.h"
+#include "xsdl.h"
 
+#define FREQUENCY 48000
+#define SAMPLES (FREQUENCY * 3520 / 2764800)
+
+int sound_scope;
 static SDL_AudioDeviceID dev;
 static float charge;
-static float vr, vc;
+static float voltage;
 
-static const float capacitance = 6.8e-6;
-static const float resistance = 390.0;
-// T=0.002652  0.0012804097311139564
+static const float capacitance = 6.8e-6; //C8 in schematic.
+static const float resistance1 = 390.0; //R16 in schematic.
+static const float resistance2 = 16.0; //Speaker, just a guess.
 
-// I = VR/R
-// Q += I * dt
-// VC = Q/I
-
-static u8 buffer[48000 / 100];
+static u8 buffer[SAMPLES];
 static int flip_flop;
 
 static void speaker (void);
@@ -21,28 +22,28 @@ static EVENT (sound_event, speaker);
 
 void bell (void)
 {
+  //LOG (SND, "Bell");
   flip_flop = 0;
 }
 
 static u8 sample (void)
 {
+  const float dt = 1.0 / FREQUENCY;
   float current;
   if (flip_flop) {
-    current = vr / resistance;
-    charge += current;
-    vc = charge / current;
-    vr = 5.0 - vc;
-    vc = 5;
+    current = (5 - voltage) / resistance1;
+    charge += dt * current;
+    voltage = charge / capacitance;
+    //LOG (SND, "Charging: %.3fA, %.6fC, %.2fV", current, charge, voltage);
   } else {
-    vr = -vc;
-    current = vr / resistance;
-    charge += current;
-    vc = charge / current;
-    vr = -vc;
-    vc = 0;
-    flip_flop = 1;
+    current = -voltage / resistance2;
+    charge += dt * current;
+    voltage = charge / capacitance;
+    if (voltage < 0.8)
+      flip_flop = 1;
+    //LOG (SND, "Discharging: %.3fA, %.6fC, %.2fV", current, charge, voltage);
   }
-  return (u8)(255.0 * vc / 5.0);
+  return (u8)(255.0 * voltage / 5.0);
 }
 
 static void speaker (void)
@@ -53,30 +54,33 @@ static void speaker (void)
   queued = SDL_GetQueuedAudioSize (dev);
   if (queued == 0)
     LOG (SND, "Queue empty");
-  else if (queued > 3*480)
+  else if (queued > 30*48)
     //Sleep until there are 20 ms of audio queued.
-    SDL_Delay ((queued - 2*480) / 48);
+    SDL_Delay ((queued - 20*48) / 48);
 
-  for (i = 0; i < 480; i++)
+  for (i = 0; i < SAMPLES; i++)
     buffer[i] = sample ();
   SDL_QueueAudio (dev, buffer, sizeof buffer);
-  add_event (2764800 / 100, &sound_event);
+  if (sound_scope)
+    sdl_sound (buffer, sizeof buffer);
+  add_event (2764800 * SAMPLES / FREQUENCY, &sound_event);
 }
 
 void reset_sound (void)
 {
   SDL_AudioSpec want, have;
 
+  sound_scope = 0;
+
   flip_flop = 1;
   charge = 0.0;
-  vc = 5.0;
-  vr = 0.0;
+  voltage = 0.0;
 
   memset (&want, 0, sizeof want);
-  want.freq = 48000;
+  want.freq = FREQUENCY;
   want.format = AUDIO_U8;
   want.channels = 1;
-  want.samples = 48000 / 100;
+  want.samples = SAMPLES;
 
   dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
   if (dev == 0) {
