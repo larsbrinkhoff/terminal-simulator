@@ -151,11 +151,12 @@ int main (int argc, char **argv)
 
   cmd = &argv[optind];
 
+  log_file = stderr;
+
   mkpty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
-
   sdl_init (scale, full);
-
   reset ();
+
   if (debug)
     ddt ();
   else

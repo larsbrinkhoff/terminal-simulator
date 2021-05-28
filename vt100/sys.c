@@ -70,8 +70,6 @@ void reset (void)
 {
   int i;
 
-  log_file = stderr;
-
   cpu_reset ();
 
   for (i = 0; i < 256; i++) {

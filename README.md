@@ -12,12 +12,13 @@ Advanced Video Option is not included.
 
 ### Usage
 
-The command line syntax is `vt100 [-f] [-D] [-R test] program`.
+The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
 
 - `-f` enters full screen.  Toggle with <kbd>F11</kbd>.
 - `-D` enters a PDP-10 style DDT for debugging the firmware.
 - `-R test` runs a CP/M program; this is only for testing.
-- `program` is any command to run as a child process providing I/O.
+- `program/device` is any command to run as a child process providing I/O,
+  or a character device assumed to be a serial port.
 
 <kbd>F9</kbd> is the SET-UP key.  See a [VT100 User
 Guide](https://vt100.net/docs/vt100-ug/chapter1.html) for instructions.
