@@ -1,11 +1,11 @@
 install_ubuntu() {
     sudo apt-get update -ym
-    sudo apt-get install -y libsdl2-dev
+    sudo apt-get install -y libsdl2-dev libsdl2-image-dev
 }
 
 install_macos() {
     brew update
-    brew install sdl2
+    brew install sdl2 sdl2_image
 }
 
 case `uname` in

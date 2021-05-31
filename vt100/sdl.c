@@ -1,5 +1,6 @@
 #include "vt100.h"
 #include "xsdl.h"
+#include <SDL_image.h>
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -173,6 +174,13 @@ void sdl_init (int scale, int full)
 {
   SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
   mkwindow (&window, &renderer, "VT100", WIDTH*scale, HEIGHT*scale);
+
+  SDL_Surface *icon = IMG_Load ("icon.jpg");
+  if (icon != NULL) {
+    SDL_SetWindowIcon (window, icon);
+    SDL_FreeSurface (icon);
+  }
+
   if (full)
     toggle_fullscreen ();
   screentex = SDL_CreateTexture (renderer, SDL_PIXELFORMAT_RGB888,
