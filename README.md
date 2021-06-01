@@ -10,6 +10,9 @@ components include video display with character generator ROM,
 settings NVRAM, Intel 8251 USART, and a keyboard matrix scanner.  The
 Advanced Video Option is not included.
 
+To build this, you need to have the SDL2 and SDL2_image libraries
+installed.
+
 ### Usage
 
 The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
