@@ -96,3 +96,6 @@ extern void add_event (unsigned cycles, struct event *event);
 extern void print_events (FILE *);
 extern void mkpty (char **cmd, int th, int tw, int fw, int fh);
 extern void send_break (void);
+extern void send_character (u8 data);
+extern u8 receive_character (void);
+extern void reset_pty (char **cmd, int th, int tw, int fw, int fh);
