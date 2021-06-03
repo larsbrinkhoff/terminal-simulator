@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -11,7 +12,7 @@
 #include "vt100.h"
 
 int pty;
-static struct termios saved;
+static struct termios saved, old;
 
 static int csize (tcflag_t flags)
 {
@@ -56,28 +57,41 @@ static void restore_termios (void)
 
 static void terminal_settings (int fd)
 {
-  if (tcgetattr (fd, &saved) == -1)
+  static struct termios new;
+  if (tcgetattr (fd, &new) == -1)
     return;
+  if (memcmp (&old, &new, sizeof saved) == 0)
+    return;
+  memcpy (&old, &new, sizeof saved);
   LOG (UART, "tty input modes: "
        "%cIGNBRK %cIGNPAR %cPARMRK %cINPCK %cISTRIP %cIXON %cIXOFF",
-       (saved.c_iflag & IGNBRK) ? '+' : '-',
-       (saved.c_iflag & IGNPAR) ? '+' : '-',
-       (saved.c_iflag & PARMRK) ? '+' : '-',
-       (saved.c_iflag & INPCK)  ? '+' : '-',
-       (saved.c_iflag & ISTRIP) ? '+' : '-',
-       (saved.c_iflag & IXON)   ? '+' : '-',
-       (saved.c_iflag & IXOFF)  ? '+' : '-');
+       (new.c_iflag & IGNBRK) ? '+' : '-',
+       (new.c_iflag & IGNPAR) ? '+' : '-',
+       (new.c_iflag & PARMRK) ? '+' : '-',
+       (new.c_iflag & INPCK)  ? '+' : '-',
+       (new.c_iflag & ISTRIP) ? '+' : '-',
+       (new.c_iflag & IXON)   ? '+' : '-',
+       (new.c_iflag & IXOFF)  ? '+' : '-');
   LOG (UART, "tty control modes: "
        "CS%d %cSTOPB %cPARENB %cPARODD %cCLOCAL %cCRTSCTS",
-       csize (saved.c_cflag),
-       (saved.c_cflag & CSTOPB) ? '+' : '-',
-       (saved.c_cflag & PARENB) ? '+' : '-',
-       (saved.c_cflag & PARODD) ? '+' : '-',
-       (saved.c_cflag & CLOCAL) ? '+' : '-',
-       (saved.c_cflag & CRTSCTS)? '+' : '-');
+       csize (new.c_cflag),
+       (new.c_cflag & CSTOPB) ? '+' : '-',
+       (new.c_cflag & PARENB) ? '+' : '-',
+       (new.c_cflag & PARODD) ? '+' : '-',
+       (new.c_cflag & CLOCAL) ? '+' : '-',
+       (new.c_cflag & CRTSCTS)? '+' : '-');
   LOG (UART, "tty baud rates: %d %d",
-       get_baud (cfgetispeed (&saved)),
-       get_baud (cfgetospeed (&saved)));
+       get_baud (cfgetispeed (&new)),
+       get_baud (cfgetospeed (&new)));
+}
+
+static void check_settings (void);
+static EVENT (pty_event, check_settings);
+
+static void check_settings (void)
+{
+  terminal_settings (pty);
+  add_event (2764800/3, &pty_event);
 }
 
 static void raw (void)
@@ -132,7 +146,7 @@ static int mktty (char *device)
   return open (device, O_RDWR);
 }
 
-void mkpty (char **cmd, int th, int tw, int fw, int fh)
+void reset_pty (char **cmd, int th, int tw, int fw, int fh)
 {
   struct winsize ws;
 
@@ -158,9 +172,27 @@ void mkpty (char **cmd, int th, int tw, int fw, int fh)
     LOG (PTY, "Couldn't allocate pty");
     exit (1);
   }
-  terminal_settings (pty);
+
+  tcgetattr (pty, &saved);
+  memset (&old, 0, sizeof old);
+  check_settings ();
+
   ioctl (pty, TIOCSWINSZ, &ws);
   spawn (cmd);
+}
+
+void send_character (u8 data)
+{
+  write (pty, &data, 1);
+  LOG (PTY, "Transmitted %02X", data);
+}
+
+u8 receive_character (void)
+{
+  u8 data;
+  if (read (pty, &data, 1) < 0)
+    exit (0);
+  return data;
 }
 
 void send_break (void)

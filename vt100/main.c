@@ -157,7 +157,7 @@ int main (int argc, char **argv)
 
   log_file = stderr;
 
-  mkpty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
+  reset_pty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
   sdl_init (scale, full);
   reset ();
 

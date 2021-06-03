@@ -1,6 +1,5 @@
 #include <SDL.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include "vt100.h"
 
 // Intel 8251 USART.
@@ -160,11 +159,11 @@ static int receiver (void *arg)
     stop_cycles = 288;
     char_size = 8;
 
-    if (read (pty, &c, 1) < 0)
-      exit (0);
-
+    c = receive_character ();
     encode_character (c);
   }
+
+  return 0;
 }
 
 static void rx_check (void);
@@ -217,7 +216,7 @@ static void tx_start (void)
 
 static void tx_empty (void)
 {
-  write (pty, &tx_shift, 1);
+  send_character (tx_shift);
   if (status & TX_RDY)
     status |= TX_EMPTY;
   else
