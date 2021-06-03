@@ -1,5 +1,5 @@
 #define _XOPEN_SOURCE 600
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #define _DARWIN_C_SOURCE
 #include <stdlib.h>
 #include <fcntl.h>
@@ -10,9 +10,14 @@
 #include <sys/stat.h>
 #include <termios.h>
 #include "vt100.h"
+#include <SDL.h>
 
 int pty;
 static struct termios saved, old;
+static int xonxoff;
+static SDL_bool throttle;
+static SDL_mutex *lock;
+static SDL_cond *cond;
 
 static int csize (tcflag_t flags)
 {
@@ -83,6 +88,16 @@ static void terminal_settings (int fd)
   LOG (UART, "tty baud rates: %d %d",
        get_baud (cfgetispeed (&new)),
        get_baud (cfgetospeed (&new)));
+  xonxoff =
+    (new.c_iflag & IXON) != 0 &&
+    new.c_cc[VSTART] == 0x11 &&
+    new.c_cc[VSTOP] == 0x13;
+  if (!xonxoff) {
+    SDL_LockMutex (lock);
+    throttle = SDL_FALSE;
+    SDL_CondSignal (cond);
+    SDL_UnlockMutex (lock);
+  }
 }
 
 static void check_settings (void);
@@ -173,6 +188,10 @@ void reset_pty (char **cmd, int th, int tw, int fw, int fh)
     exit (1);
   }
 
+  lock = SDL_CreateMutex ();
+  cond = SDL_CreateCond ();
+  throttle = SDL_FALSE;
+
   tcgetattr (pty, &saved);
   memset (&old, 0, sizeof old);
   check_settings ();
@@ -183,13 +202,35 @@ void reset_pty (char **cmd, int th, int tw, int fw, int fh)
 
 void send_character (u8 data)
 {
-  write (pty, &data, 1);
-  LOG (PTY, "Transmitted %02X", data);
+  if (!xonxoff)
+    goto send;
+  switch (data) {
+  case 0x11:
+    SDL_LockMutex (lock);
+    throttle = SDL_FALSE;
+    SDL_CondSignal (cond);
+    SDL_UnlockMutex (lock);
+    break;
+  case 0x13:
+    SDL_LockMutex (lock);
+    throttle = SDL_TRUE;
+    SDL_UnlockMutex (lock);
+    break;
+  default:
+  send:
+    write (pty, &data, 1);
+    LOG (PTY, "Transmitted %02X", data);
+    break;
+  }
 }
 
 u8 receive_character (void)
 {
   u8 data;
+  SDL_LockMutex (lock);
+  while (throttle)
+    SDL_CondWait (cond, lock);
+  SDL_UnlockMutex (lock);
   if (read (pty, &data, 1) < 0)
     exit (0);
   return data;
