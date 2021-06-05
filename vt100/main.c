@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include "opengl.h"
 
 int full = 0;
 char *argv0;
@@ -159,6 +160,7 @@ int main (int argc, char **argv)
 
   reset_pty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
   sdl_init (scale, full);
+  init_opengl ();
   reset ();
 
   if (debug)
