@@ -1,6 +1,7 @@
 #include "vt100.h"
 #include "xsdl.h"
 #include <SDL_image.h>
+#include "opengl.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -101,7 +102,7 @@ static void draw (struct draw *data)
   void *pixels;
   u8 *dest;
   int pitch;
-  int w;
+  int w, h;
 
   if (SDL_LockTexture (screentex, NULL, &pixels, &pitch) != 0) {
     LOG (SDL, "LockTexture error: %s", SDL_GetError ());
@@ -129,8 +130,9 @@ static void draw (struct draw *data)
     }
   }
   SDL_UnlockTexture (screentex);
-  SDL_RenderCopy (renderer, screentex, NULL, NULL);
-  SDL_RenderPresent (renderer);
+  SDL_GetRendererOutputSize (renderer, &w, &h);
+  opengl_present (screentex, w, h);
+  SDL_GL_SwapWindow (window);
   free (data);
 }
 
@@ -163,10 +165,13 @@ static void nothing (void)
 
 void sdl_init (int scale, int full)
 {
+  SDL_RendererInfo info;
   SDL_DisplayMode mode;
   struct draw *data;
+  int w, h;
 
-  SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
+  SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO
+	    | SDL_VIDEO_OPENGL);
 
   LOG (SDL, "Video displays: %d", SDL_GetNumVideoDisplays ());
   SDL_GetCurrentDisplayMode (0, &mode);
@@ -178,11 +183,17 @@ void sdl_init (int scale, int full)
   if (window == NULL)
     //panic("SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError ());
     ;
+  SDL_SetHint (SDL_HINT_RENDER_DRIVER, "opengl");
   renderer = SDL_CreateRenderer (window, -1,
 				 SDL_RENDERER_ACCELERATED |
+				 SDL_RENDERER_TARGETTEXTURE |
 				 SDL_RENDERER_PRESENTVSYNC);
   SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_SetHint ("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
+
+  SDL_GetRendererInfo (renderer, &info);
+  SDL_GetRendererOutputSize (renderer, &w, &h);
+  LOG (SDL, "Renderer: %s, %dx%d", info.name, w, h);
 
   SDL_Surface *icon = IMG_Load ("icon.jpg");
   if (icon != NULL) {
