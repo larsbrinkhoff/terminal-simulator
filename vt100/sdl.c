@@ -109,7 +109,8 @@ static void draw (struct draw *data)
     exit (1);
   }
 
-  dest = pixels;
+  dest = pixels + BORDER * pitch;
+  dest += BORDER * sizeof (u32);
   scroll = data->scroll;
   for (y = yy = 0; y < 240; y++) {
     w = ((a[yy] & 0x60) != 0x60) ? 2 : 1;
