@@ -17,6 +17,11 @@ void main (void)
   vec2 pos = gl_FragCoord.xy / resolution;
   pos.y = 1.0 - pos.y;
 
+  pos -= vec2 (0.5);
+  float curve = 0.1 * dot (pos, pos);
+  pos += curve * pos;
+  pos += vec2 (0.5);
+
   for (int i = 0; i <= size2; i++)
     kernel2[size2 + i] = kernel2[size2 - i] = gauss (float (i), 0.6);
 
