@@ -11,11 +11,12 @@ typedef uint8_t u8;
 #define CWIDTH 10
 #define CHEIGHT 10
 
-#define FBWIDTH (TERMWIDTH*CWIDTH+2)
-#define FBHEIGHT (TERMHEIGHT*CHEIGHT+2)
+#define FBWIDTH (TERMWIDTH*CWIDTH)
+#define FBHEIGHT (TERMHEIGHT*CHEIGHT)
 
-#define WIDTH  (FBWIDTH)
-#define HEIGHT (2*FBHEIGHT)
+#define BORDER 5
+#define WIDTH  (FBWIDTH + 2*BORDER)
+#define HEIGHT (2*FBHEIGHT + 2*BORDER)
 
 #define RST0 0xC7
 #define RST1 0xCF
