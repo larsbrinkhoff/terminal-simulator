@@ -13,6 +13,8 @@ Advanced Video Option is not included.
 To build this, you need to have the SDL2 and SDL2_image libraries
 installed.
 
+<img src="https://user-images.githubusercontent.com/775050/121336737-1a279100-c91c-11eb-87fb-bd015b20e7fa.png" width="200"> <img src="https://user-images.githubusercontent.com/775050/121338972-53610080-c91e-11eb-94aa-8c670bb2e8e3.png" width="200"> <img src="https://user-images.githubusercontent.com/775050/121336830-2dd2f780-c91c-11eb-84b6-e7dacf5324d0.png" width="200">
+
 ### Usage
 
 The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
@@ -35,4 +37,4 @@ This simulator was inspired by Michael Gardi's 3D printed model, see his
 and [GitHub files](https://github.com/kidmirage/2-3-Scale-VT100-Terminal-Reproduction).
 
 This is my printing progress so far:
-![VT100 3D print](https://user-images.githubusercontent.com/775050/119787447-80022a80-bed1-11eb-859a-4e9bcedda253.jpg)
+![VT100 3D print](https://retrocomputingforum.com/uploads/default/original/2X/c/c4f3cae595903887ff446df226e7f89e31eb5b14.jpeg)
