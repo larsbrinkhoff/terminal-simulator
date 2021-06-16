@@ -126,6 +126,7 @@ static void shell (char **cmd)
 {
   setenv ("TERM", "vt100", 1);
   execvp (cmd[0], cmd);
+  LOG (PTY, "Error executing command %s", cmd[0]);
   exit (1);
 }
 
@@ -133,6 +134,7 @@ static void spawn (char **cmd)
 {
   switch (fork ()) {
   case -1:
+    LOG (PTY, "Error forking a child.");
     exit (1);
 
   case 0:
@@ -142,8 +144,10 @@ static void spawn (char **cmd)
 
     setsid ();
 
-    if (open (ptsname (pty), O_RDWR) != 0)
+    if (open (ptsname (pty), O_RDWR) != 0) {
+      LOG (PTY, "Error opening pty %s", ptsname (pty));
       exit (1);
+    }
     close (pty);
     dup (0);
     dup (1);
@@ -231,8 +235,10 @@ u8 receive_character (void)
   while (throttle)
     SDL_CondWait (cond, lock);
   SDL_UnlockMutex (lock);
-  if (read (pty, &data, 1) < 0)
+  if (read (pty, &data, 1) < 0) {
+    LOG (PTY, "End of file or error from pty.");
     exit (0);
+  }
   return data;
 }
 
