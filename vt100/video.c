@@ -163,6 +163,7 @@ static void refresh (void)
   for (i = 0; i < 27; i++)
     addr = video_line (i, addr);
   
+  draw_data.odd = interlace && (fields & 1);
   draw_data.scroll = line_scroll;
   draw_data.columns = columns;
   draw_data.reverse = reverse_field;

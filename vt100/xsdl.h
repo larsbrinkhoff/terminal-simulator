@@ -1,6 +1,7 @@
 #include <SDL.h>
 
 struct draw {
+  int odd;
   int scroll;
   int columns;
   int reverse;

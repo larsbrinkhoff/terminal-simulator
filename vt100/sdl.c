@@ -112,11 +112,17 @@ static void draw (struct draw *data)
   dest = pixels + BORDER * pitch;
   dest += BORDER * sizeof (u32);
   scroll = data->scroll;
+  if (data->odd) {
+    memset (dest, 0, pitch);
+    dest += pitch;
+  }
   for (y = yy = 0; y < 240; y++) {
     w = ((a[yy] & 0x60) != 0x60) ? 2 : 1;
     for (x = 0; x < data->columns / w; x++)
       dest = render_video (dest, fb[yy][x], (a[yy] & 0x60) != 0x60, scroll, data);
-    dest += 2 * pitch - sizeof (u32) * 800;
+    dest += pitch - sizeof (u32) * 800;
+    memset (dest, 0, pitch);
+    dest += pitch;
     if (data->columns == 132)
       dest += (800 - 132 * 6) * sizeof (u32);
     if ((a[yy] & 0x40) == 0x40 || (y & 1)) {
@@ -130,6 +136,8 @@ static void draw (struct draw *data)
       }
     }
   }
+  if (!data->odd)
+    memset (dest, 0, pitch);
   SDL_UnlockTexture (screentex);
   SDL_GetRendererOutputSize (renderer, &w, &h);
   opengl_present (screentex, w, h);
