@@ -10,6 +10,7 @@
 
 int full = 0;
 int quick = 0;
+int field_rate = 1;
 char *argv0;
 char **cmd;
 
@@ -126,7 +127,7 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "b:Br2fR:DC:Q")) != -1) {
+  while ((opt = getopt (argc, argv, "b:Br2fR:DC:QN:")) != -1) {
     switch (opt) {
     case 'B':
       /* Backspace is Rubout. */
@@ -145,6 +146,9 @@ int main (int argc, char **argv)
       break;
     case 'Q':
       quick = 1;
+      break;
+    case 'N':
+      field_rate = atoi (optarg);
       break;
     case 'C':
       sdl_capslock (0x7C); //Make capslock into control.

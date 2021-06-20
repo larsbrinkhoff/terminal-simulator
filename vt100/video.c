@@ -153,10 +153,8 @@ static void refresh (void)
   add_event (2764800 / hertz, &refresh_event);
 
   fields++;
-#if 0
-  if ((fields & 3) != 0)
+  if ((fields % field_rate) != 0)
     return;
-#endif
   //LOG (VID, "Refresh frame %d", frames);
 
   addr = 0x2000;
