@@ -43,6 +43,7 @@ extern unsigned long long get_cycles (void);
 extern u8 vt100_flags;
 extern int pty;
 extern int sound_scope;
+extern int quick;
 
 extern u8 vt100rom[];
 extern u8 vt100font[];

@@ -9,6 +9,7 @@
 #include "opengl.h"
 
 int full = 0;
+int quick = 0;
 char *argv0;
 char **cmd;
 
@@ -125,7 +126,7 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "b:Br2fR:DC")) != -1) {
+  while ((opt = getopt (argc, argv, "b:Br2fR:DC:Q")) != -1) {
     switch (opt) {
     case 'B':
       /* Backspace is Rubout. */
@@ -141,6 +142,9 @@ int main (int argc, char **argv)
       break;
     case 'D':
       debug = 1;
+      break;
+    case 'Q':
+      quick = 1;
       break;
     case 'C':
       sdl_capslock (0x7C); //Make capslock into control.
@@ -160,7 +164,8 @@ int main (int argc, char **argv)
 
   reset_pty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
   sdl_init (scale, full);
-  init_opengl ();
+  if (!quick)
+    init_opengl ();
   reset ();
 
   if (debug)
