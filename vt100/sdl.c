@@ -139,9 +139,14 @@ static void draw (struct draw *data)
   if (!data->odd)
     memset (dest, 0, pitch);
   SDL_UnlockTexture (screentex);
-  SDL_GetRendererOutputSize (renderer, &w, &h);
-  opengl_present (screentex, w, h);
-  SDL_GL_SwapWindow (window);
+  if (quick) {
+    SDL_RenderCopy (renderer, screentex, NULL, NULL);
+    SDL_RenderPresent (renderer);
+  } else {
+    SDL_GetRendererOutputSize (renderer, &w, &h);
+    opengl_present (screentex, w, h);
+    SDL_GL_SwapWindow (window);
+  }
   free (data);
 }
 
@@ -177,10 +182,13 @@ void sdl_init (int scale, int full)
   SDL_RendererInfo info;
   SDL_DisplayMode mode;
   struct draw *data;
+  Uint32 flags;
   int w, h;
 
-  SDL_Init (SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO
-	    | SDL_VIDEO_OPENGL);
+  flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO;
+  if (!quick)
+    flags |= SDL_VIDEO_OPENGL;
+  SDL_Init (flags);
 
   LOG (SDL, "Video displays: %d", SDL_GetNumVideoDisplays ());
   SDL_GetCurrentDisplayMode (0, &mode);
@@ -192,7 +200,8 @@ void sdl_init (int scale, int full)
   if (window == NULL)
     //panic("SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError ());
     ;
-  SDL_SetHint (SDL_HINT_RENDER_DRIVER, "opengl");
+  if (!quick)
+    SDL_SetHint (SDL_HINT_RENDER_DRIVER, "opengl");
   renderer = SDL_CreateRenderer (window, -1,
 				 SDL_RENDERER_ACCELERATED |
 				 SDL_RENDERER_TARGETTEXTURE |
