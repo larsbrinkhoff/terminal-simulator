@@ -1,6 +1,7 @@
 #version 120
 
 uniform vec2 resolution;
+uniform float curvature;
 uniform sampler2D tex;
 
 float gauss (float x, float sigma)
@@ -18,7 +19,7 @@ void main (void)
   pos.y = 1.0 - pos.y;
 
   pos -= vec2 (0.5);
-  float curve = 0.1 * dot (pos, pos);
+  float curve = curvature * dot (pos, pos);
   pos += curve * pos;
   pos += vec2 (0.5);
 
