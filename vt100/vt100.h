@@ -45,6 +45,7 @@ extern int pty;
 extern int sound_scope;
 extern int quick;
 extern int field_rate;
+extern int flow;
 
 extern u8 vt100rom[];
 extern u8 vt100font[];
