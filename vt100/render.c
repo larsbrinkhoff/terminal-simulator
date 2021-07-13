@@ -83,7 +83,12 @@ static unsigned widen (unsigned pixels, unsigned mask1, unsigned mask2)
 static u8 * render_80 (u8 *dest, int c, int wide, int scroll, struct draw *data)
 {
   unsigned pixels, reverse = 0;
-  pixels = vt100font[16 * (c & 0x7F) + scroll];
+
+  // FIXME: the font ROM seems slightly scrambled
+  if (scroll == 0)
+	  ++c;
+  pixels = vt100font[16 * (c & 0x7F) + scroll - 1];
+
   if (c & 0x80) {
     if (data->underline)
       pixels = scroll == 8 ? 0xFF : pixels;
@@ -93,12 +98,19 @@ static u8 * render_80 (u8 *dest, int c, int wide, int scroll, struct draw *data)
   if (data->reverse)
     reverse ^= wide ? 0xFFFFF : 0x3FF;
   pixels <<= 2;
+
+  // extend last column
   if (pixels & 4)
     pixels |= 3;
+
+  // dot stretcher
   pixels |= pixels >> 1;
+
   if (wide)
     pixels = widen (pixels, 0x200, 0xC0000);
+
   pixels ^= reverse;
+
   if (wide) {
     SDL_memcpy (dest, scanline[pixels >> 10], 10 * sizeof (u32));
     dest += 10 * sizeof (u32);
@@ -111,7 +123,12 @@ static u8 * render_80 (u8 *dest, int c, int wide, int scroll, struct draw *data)
 static u8 * render_132 (u8 *dest, int c, int wide, int scroll, struct draw *data)
 {
   unsigned pixels, reverse = 0;
-  pixels = vt100font[16 * (c & 0x7F) + scroll];
+
+  // FIXME: the font ROM seems slightly scrambled
+  if (scroll == 0)
+	  ++c;
+  pixels = vt100font[16 * (c & 0x7F) + scroll -1];
+
   if (c & 0x80) {
     if (data->underline)
       pixels = scroll == 8 ? 0xFF : pixels;
@@ -121,12 +138,19 @@ static u8 * render_132 (u8 *dest, int c, int wide, int scroll, struct draw *data
   if (data->reverse)
     reverse ^= wide ? 0x3FFFF : 0x1FF;
   pixels <<= 1;
+
+  // extend last column
   if (pixels & 2)
     pixels |= 1;
+
+  // dot stretcher
   pixels |= pixels >> 1;
+
   if (wide)
     pixels = widen (pixels, 0x200, 0xC0000);
+
   pixels ^= reverse;
+
   if (wide) {
     SDL_memcpy (dest, scanline[pixels >> 9], 6 * sizeof (u32));
     dest += 6 * sizeof (u32);
