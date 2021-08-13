@@ -110,7 +110,28 @@ static int cputhread (void *arg)
 void
 usage(void)
 {
-  panic ("usage: %s [-2] [-B] [-f] command...", argv0);
+  panic ("Usage: %s -h | [-b:Br2fR:DC:QN:c:] command...", argv0);
+}
+
+void help(void)
+{
+  printf (
+    "Usage: %s [OPTIONS] command...\n"
+    "Run command [with arguments] in a hardware-emulated VT100.\n"
+    "\n"
+    "  -h      Display this help page and exit.\n"
+    "  -Q      Disable OpenGL and screen shader (may run faster).\n"
+    "  -N DIV  Reduce refresh-rate to 60/DIV Hz (may run faster).\n"
+    "  -2      Magnify x2. Each additional '-2' adds 1 to the multiplier.\n"
+    "  -f      Run in full-screen.\n"
+    "  -c CUR  Screen curvature (0.0 - 0.5, requires OpenGL).\n"
+    "  -C      Treat Caps-Lock as Control.\n"
+    "  -B      Treat backspace as rubout (currently not implemented).\n"
+    "  -R PROG Run CP/M binary file [path/to/]PROG.\n"
+    "  -D      Debug mode.\n"
+    "\n"
+    "Project page: https://github.com/larsbrinkhoff/terminal-simulator\n"
+    , argv0);
 }
 
 static void end (u16 addr)
@@ -128,8 +149,11 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "b:Br2fR:DC:QN:c:")) != -1) {
+  while ((opt = getopt (argc, argv, "hb:Br2fR:DC:QN:c:")) != -1) {
     switch (opt) {
+    case 'h':
+      help();
+      exit(0);
     case 'B':
       /* Backspace is Rubout. */
       break;
