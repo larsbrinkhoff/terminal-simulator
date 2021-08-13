@@ -89,6 +89,7 @@ static void terminal_settings (int fd)
        get_baud (cfgetispeed (&new)),
        get_baud (cfgetospeed (&new)));
   xonxoff =
+    flow &&
     (new.c_iflag & IXON) != 0 &&
     new.c_cc[VSTART] == 0x11 &&
     new.c_cc[VSTOP] == 0x13;
