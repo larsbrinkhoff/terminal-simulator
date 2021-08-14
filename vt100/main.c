@@ -110,7 +110,7 @@ static int cputhread (void *arg)
 void
 usage(void)
 {
-  panic ("Usage: %s -h | [-b:Br2fR:DC:QN:c:] command...", argv0);
+  panic ("Usage: %s -h | [-B2fR:DCQN:c:] command...", argv0);
 }
 
 void help(void)
@@ -149,7 +149,7 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "hb:Br2fR:DC:QN:c:")) != -1) {
+  while ((opt = getopt (argc, argv, "hB2fR:DCQN:c:")) != -1) {
     switch (opt) {
     case 'h':
       help();
