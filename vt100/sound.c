@@ -3,7 +3,11 @@
 #include "xsdl.h"
 
 #define FREQUENCY 48000
-#define SAMPLES (FREQUENCY * 3520 / 2764800)
+#ifdef __FreeBSD__
+# define SAMPLES 64 /* must be a power of two */
+#else
+# define SAMPLES (FREQUENCY * 3520 / 2764800)
+#endif
 
 int sound_scope;
 static SDL_AudioDeviceID dev;
