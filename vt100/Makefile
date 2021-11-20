@@ -1,5 +1,5 @@
 all: vt100
-CFLAGS=-O3
+CFLAGS?=-O3
 ifeq "$(shell uname)" "Darwin"
  LDFLAGS += -framework OpenGL
 else
