@@ -116,7 +116,7 @@ usage(void)
 void help(void)
 {
   printf (
-    "Usage: %s [OPTIONS] command...\n"
+    "Usage: %s [OPTIONS] [command...]\n"
     "Run command [with arguments] in a hardware-emulated VT100.\n"
     "\n"
     "  -h      Display this help page and exit.\n"
@@ -144,6 +144,7 @@ int main (int argc, char **argv)
   int debug = 0;
   int scale = 1;
   int opt;
+  char *defaultcommand[2] = { NULL, NULL };
 
   halt = end;
   sdl_capslock (0x7E); //Default is capslock.
@@ -187,10 +188,13 @@ int main (int argc, char **argv)
     }
   }
 
-  if (optind == argc && !debug)
-    usage ();
-
-  cmd = &argv[optind];
+  if (optind < argc)
+    cmd = &argv[optind];
+  else {
+    setenv("SHELL", "/bin/sh", 0);
+    defaultcommand[0] = getenv("SHELL");
+    cmd = defaultcommand;
+  }
 
   log_file = stderr;
 
