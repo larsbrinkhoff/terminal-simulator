@@ -151,6 +151,9 @@ static void spawn (char **cmd)
     close (pty);
     dup (0);
     dup (1);
+#ifdef __FreeBSD__
+    ioctl (0, TIOCSCTTY);
+#endif
     shell (cmd);
   }
 }
@@ -235,7 +238,7 @@ u8 receive_character (void)
   while (throttle)
     SDL_CondWait (cond, lock);
   SDL_UnlockMutex (lock);
-  if (read (pty, &data, 1) < 0) {
+  if (read (pty, &data, 1) <= 0) {
     LOG (PTY, "End of file or error from pty.");
     exit (0);
   }
