@@ -1,4 +1,8 @@
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "vt100.h"
 
 //ER1400 device.
@@ -8,6 +12,35 @@ static u8 nvr_latch;
 static u32 nvr_addr;
 static u16 nvr_data;
 static FILE *f;
+static char *filename = NULL;
+#define NVRAM "vt100-nvram"
+
+static void setfilename(void) {
+	char *statehome, *home;
+
+	if (filename != NULL)
+		return;
+
+	statehome = getenv("XDG_STATE_HOME");
+	if (statehome != NULL) {
+		asprintf(&filename, "%s/%s", statehome, NVRAM);
+		return;
+	}
+
+	home = getenv("HOME");
+	if (home != NULL) {
+		asprintf(&statehome, "%s/.local", home);
+		mkdir(statehome, 0777);
+		free(statehome);
+		asprintf(&statehome, "%s/.local/state", home);
+		mkdir(statehome, 0777);
+		free(statehome);
+		asprintf(&filename, "%s/.local/state/%s", home, NVRAM);
+		return;
+	}
+
+	filename = NVRAM;
+}
 
 static u8 nvr_in (u8 port)
 {
@@ -23,8 +56,9 @@ static void nvr_out (u8 port, u8 data)
 
 static void save (int addr)
 {
+  setfilename();
   if (f == NULL)
-    f = fopen ("nvram", "wb");
+    f = fopen (filename, "wb");
   if (f == NULL)
     return;
   fseek (f, 2 * addr, SEEK_SET);
@@ -161,7 +195,8 @@ void reset_nvr (void)
   register_port (0x62, nvr_in, nvr_out);
   nvr_data = 0;
   nvr_addr = 0;
-  f = fopen ("nvram", "r+b");
+  setfilename();
+  f = fopen (filename, "r+b");
   if (f != NULL)
     load ();
   else
