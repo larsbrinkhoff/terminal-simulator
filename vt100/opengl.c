@@ -7,6 +7,10 @@
 #include <GL/gl.h>
 #endif
 
+#ifndef SHADERDIR
+# define SHADERDIR ""
+#endif
+
 static PFNGLCREATESHADERPROC glCreateShader;
 static PFNGLSHADERSOURCEPROC glShaderSource;
 static PFNGLCOMPILESHADERPROC glCompileShader;
@@ -102,8 +106,8 @@ static GLuint init_shader (void)
   unsigned int prog;
   int shader1, shader2, linked;
 
-  shader1 = compile ("vertex.shader", GL_VERTEX_SHADER);
-  shader2 = compile ("crt.shader", GL_FRAGMENT_SHADER);
+  shader1 = compile (SHADERDIR "vertex.shader", GL_VERTEX_SHADER);
+  shader2 = compile (SHADERDIR "crt.shader", GL_FRAGMENT_SHADER);
 
   prog = glCreateProgram ();
   glAttachShader (prog, shader1);
