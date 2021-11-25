@@ -3,6 +3,7 @@
 struct draw {
   int odd;
   int scroll;
+  int line;
   int columns;
   int reverse;
   int underline;
@@ -19,6 +20,8 @@ extern void sdl_render (int brightness, int columns);
 extern void draw_line (int scroll, int attr, int y, uint8_t *data);
 extern void sdl_capslock (uint8_t code);
 extern void sdl_sound (uint8_t *data, int size);
+extern void sdl_scanline (struct draw *data);
+extern void sdl_present (void);
 
 extern uint8_t keymap (SDL_Scancode key);
 extern uint8_t capslock;

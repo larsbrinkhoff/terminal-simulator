@@ -1,14 +1,14 @@
-# Simulation of the VT100 hardware
+# Simulation of the VT52 and VT100 hardware
 
 [![Build](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml/badge.svg)](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml)
 
 ### About
 
-This is a software simulation of the VT100 hardware.  The original
-firmware ROM is built in and executed by an 8080 emulator.  Other
-components include video display with character generator ROM,
-settings NVRAM, Intel 8251 USART, and a keyboard matrix scanner.  The
-Advanced Video Option is not included.
+This is a software simulation of the VT100 hardware.  (There is also a
+VT52 simulation.)  The original firmware ROM is built in and executed
+by an 8080 emulator.  Other components include video display with
+character generator ROM, settings NVRAM, Intel 8251 USART, and a
+keyboard matrix scanner.  The Advanced Video Option is not included.
 
 To build this, you need to have the SDL2 and SDL2_image libraries
 installed.

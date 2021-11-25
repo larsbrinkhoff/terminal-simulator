@@ -2,3 +2,5 @@
 vt100/vt100.bin
 vt100/vt100
 vt100/nvram
+vt52/vt52
+vt52/dump.vcd

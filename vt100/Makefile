@@ -1,5 +1,5 @@
 all: vt100
-CFLAGS?=-O3 -DSHADERDIR=\"../common/\"
+CFLAGS?=-O3 -g -DSHADERDIR=\"../common/\"
 ifeq "$(shell uname)" "Darwin"
  LDFLAGS += -framework OpenGL
 else

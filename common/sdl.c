@@ -96,6 +96,65 @@ void sdl_render (int brightness, int columns)
   SDL_PushEvent (&ev);
 }
 
+void sdl_scanline (struct draw *data)
+{
+  struct draw *copy;
+  SDL_Event ev;
+
+  copy = malloc (sizeof (struct draw));
+  memcpy (copy, data, sizeof (struct draw));
+  copy->pixels = malloc (720 * sizeof (uint32_t));
+  memcpy (copy->pixels, data->pixels, 720 * sizeof (uint32_t));
+
+  SDL_zero (ev);
+  ev.type = userevent + 3;
+  ev.user.data1 = copy;
+  SDL_PushEvent (&ev);
+}
+
+static void draw_scanline (struct draw *data)
+{
+  void *pixels;
+  uint8_t *rgb;
+  int pitch;
+
+  if (SDL_LockTexture (screentex, NULL, &pixels, &pitch) != 0) {
+    LOG (SDL, "LockTexture error: %s", SDL_GetError ());
+    exit (1);
+  }
+
+  rgb = pixels;
+  rgb += pitch * BORDER;
+  rgb += pitch * data->line;
+  rgb += sizeof (uint32_t) * BORDER;
+  memcpy (rgb, data->pixels, FBWIDTH * sizeof (uint32_t));
+
+  SDL_UnlockTexture (screentex);
+  free (data->pixels);
+  free (data);
+}
+
+void sdl_present (void)
+{
+  SDL_Event ev;
+  SDL_zero (ev);
+  ev.type = userevent + 4;
+  SDL_PushEvent (&ev);
+}
+
+static void draw_present (void)
+{
+#if 0
+  int w, h;
+  SDL_GetRendererOutputSize (renderer, &w, &h);
+  opengl_present (screentex, w, h);
+  SDL_GL_SwapWindow (window);
+#else
+  SDL_RenderCopy (renderer, screentex, NULL, NULL);
+  SDL_RenderPresent (renderer);
+#endif
+}
+
 static void draw (struct draw *data)
 {
   int scroll;
@@ -298,6 +357,10 @@ void sdl_loop (void)
 	reset_render (ev.user.data1);
       else if (ev.type == userevent + 2)
 	draw_sound (ev.user.data1, ev.user.data2);
+      else if (ev.type == userevent + 3)
+	draw_scanline (ev.user.data1);
+      else if (ev.type == userevent + 4)
+	draw_present ();
       break;
     }
   }

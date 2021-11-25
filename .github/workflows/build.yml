@@ -16,7 +16,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: sh -ex test/deps.sh
-      - name: Build
+      - name: Build VT100
         run: cd vt100; make
+      - name: Build VT52
+        run: cd vt52; make
       - name: Test
         run: cd vt100; make check
