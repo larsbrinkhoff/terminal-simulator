@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "vt100.h"
+#include "log.h"
 
 //ER1400 device.
 

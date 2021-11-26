@@ -9,7 +9,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termios.h>
-#include "vt100.h"
+#include <stdio.h>
+#include "event.h"
+#include "log.h"
 #include <SDL.h>
 
 int pty;
@@ -124,7 +126,6 @@ static void raw (void)
 
 static void shell (char **cmd)
 {
-  setenv ("TERM", "vt100", 1);
   execvp (cmd[0], cmd);
   LOG (PTY, "Error executing command %s", cmd[0]);
   exit (1);
@@ -207,7 +208,7 @@ void reset_pty (char **cmd, int th, int tw, int fw, int fh)
   spawn (cmd);
 }
 
-void send_character (u8 data)
+void send_character (uint8_t data)
 {
   if (!xonxoff)
     goto send;
@@ -231,9 +232,9 @@ void send_character (u8 data)
   }
 }
 
-u8 receive_character (void)
+uint8_t receive_character (void)
 {
-  u8 data;
+  uint8_t data;
   SDL_LockMutex (lock);
   while (throttle)
     SDL_CondWait (cond, lock);

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
+#include <SDL.h>
 #include "vt100.h"
+#include "log.h"
 
 u8 memory[0x10000];
 u16 starta = 0;
@@ -63,6 +65,17 @@ static void no_out (u8 port, u8 data)
 static u8 no_in (u8 port)
 {
   LOG (SYS, "Read from unknown port %02X", port);
+  return 0;
+}
+
+int timer (void *arg)
+{
+  unsigned long long previous;
+  for (;;) {
+    previous = get_cycles ();
+    SDL_Delay (5000);
+    LOG (TIME, "%.0f cycles per second", (get_cycles () - previous) / 5.0);
+  }
   return 0;
 }
 

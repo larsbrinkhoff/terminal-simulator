@@ -1,6 +1,6 @@
 #include <SDL.h>
 #include <stdarg.h>
-#include "vt100.h"
+#include "log.h"
 
 FILE *log_file = NULL;
 static SDL_SpinLock lock;
