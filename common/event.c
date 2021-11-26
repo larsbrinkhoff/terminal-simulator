@@ -1,5 +1,5 @@
-#include <SDL.h>
-#include "vt100.h"
+#include <stdio.h>
+#include "event.h"
 
 static struct event head = { 0ULL, "(head)", NULL, NULL };
 
@@ -66,15 +66,4 @@ void print_events (FILE *f)
     cycles += node->cycles;
     fprintf (f, "%20llu %s\r\n", cycles, node->name);
   }
-}
-
-int timer (void *arg)
-{
-  unsigned long long previous;
-  for (;;) {
-    previous = get_cycles ();
-    SDL_Delay (5000);
-    LOG (TIME, "%.0f cycles per second", (get_cycles () - previous) / 5.0);
-  }
-  return 0;
 }

@@ -1,6 +1,8 @@
 #include <SDL.h>
 #include "vt100.h"
 #include "xsdl.h"
+#include "event.h"
+#include "log.h"
 
 #define FREQUENCY 48000
 #ifdef __FreeBSD__

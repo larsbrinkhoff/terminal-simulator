@@ -1,5 +1,7 @@
 #include "vt100.h"
 #include "xsdl.h"
+#include "event.h"
+#include "log.h"
 
 static int columns;
 static u8 brightness = 0x10;

@@ -5,6 +5,8 @@
 #include <termios.h>
 #include <sys/select.h>
 #include "vt100.h"
+#include "event.h"
+#include "log.h"
 
 static struct termios saved_termios;
 static FILE *output;

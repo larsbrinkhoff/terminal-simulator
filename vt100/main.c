@@ -7,6 +7,10 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include "opengl.h"
+#include "event.h"
+#include "term.h"
+#include "log.h"
+#include "pty.h"
 
 int full = 0;
 int quick = 0;
@@ -198,8 +202,9 @@ int main (int argc, char **argv)
 
   log_file = stderr;
 
+  setenv ("TERM", "vt100", 1);
   reset_pty (cmd, TERMHEIGHT, TERMWIDTH, FBWIDTH, FBHEIGHT);
-  sdl_init (scale, full);
+  sdl_init ("VT100", scale, full);
   if (!quick)
     init_opengl ();
   reset ();
