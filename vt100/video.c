@@ -9,6 +9,8 @@ static int hertz;
 static int interlace;
 static u8 line_buffer[137];
 static int line_scroll;
+// offset counter used for smooth scrolling
+static int offset_counter = 0;
 static u8 line_attr;
 
 static void refresh (void);
@@ -123,7 +125,7 @@ static u16 video_line (int n, u16 addr)
         for (i = p - line_buffer; i < columns; i++)
           *p++ = 0;
       if (n >= skip)
-        draw_line (line_scroll, line_attr & 0xE0, n - skip, line_buffer);
+        draw_line (offset_counter, line_attr & 0xE0, n - skip, line_buffer);
       line_attr = memory[addr];
       switch (line_attr & 0x60) {
       case 0x00: /*double height, bottom line*/ break;
@@ -162,11 +164,12 @@ static void refresh (void)
     addr = video_line (i, addr);
   
   draw_data.odd = interlace && (fields & 1);
-  draw_data.scroll = line_scroll;
+  draw_data.scroll = offset_counter;
   draw_data.columns = columns;
   draw_data.reverse = reverse_field;
   draw_data.underline = underline;
   sdl_refresh (&draw_data);
+  offset_counter = line_scroll;
 }
 
 void reset_video (void)
