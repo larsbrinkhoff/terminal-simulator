@@ -86,7 +86,7 @@ extern void nvr_clock (void);
 extern void key_down (u8 code);
 extern void key_up (u8 code);
 
-#if 1
+#ifdef DEBUG
 #define LOG(COMPONENT, MESSAGE, ...) \
   logger (#COMPONENT, MESSAGE, ##__VA_ARGS__)
 #else
