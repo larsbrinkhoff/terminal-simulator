@@ -1,5 +1,9 @@
 #include <stdint.h>
 
+#ifdef DEBUG
+#define DEBUG_VCD 1
+#endif
+
 extern void step (void);
 extern unsigned char ROM[1024];
 extern unsigned char CHAR[1024];

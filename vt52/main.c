@@ -76,6 +76,7 @@ int main (void)
       M[i] = rand ();
   }
 
+#ifdef DEBUG_VCD
   index_e2_74164 = vcd_variable ("e2_74164", "reg", 8);
   index_e27_74161 = vcd_variable ("e27_74161", "reg", 4);
   index_e18_7490 = vcd_variable ("e18_7490", "reg", 4);
@@ -102,6 +103,7 @@ int main (void)
   index_rom = vcd_variable ("rom", "wire", 8);
   index_mem = vcd_variable ("mem", "reg", 7);
   vcd_start ("dump.vcd", "VT52 simulator", "1ns");
+#endif
 
   sdl_init ("VT52", 1, 0);
   //init_opengl ();
