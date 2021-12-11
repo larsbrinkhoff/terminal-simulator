@@ -6,11 +6,12 @@ static int x, y;
 static int vsr;
 static int old_scan, old_vert;
 static struct draw data;
-static uint32_t rgb[900];
+static uint32_t rgb[900 * 400];
 
 static void refresh (void)
 {
-  sdl_present ();
+  data.pixels = rgb;
+  sdl_present (&data);
 }
 
 void video_shifter (int data)
@@ -25,11 +26,6 @@ void video (void)
 #endif
 
   if (old_scan && !scan) {
-    if (y >= 0 && y <= 239) {
-      data.pixels = &rgb[130];
-      data.line = y;
-      sdl_scanline (&data);
-    }
     x = 0;
     y++;
   }
@@ -42,9 +38,9 @@ void video (void)
   old_vert = vert;
 
   if (vsr & 0200) {
-    rgb[x] = 0x000000;
+    rgb[900 * y + x] = 0x000000;
   } else {
-    rgb[x] = 0xFFFFFF;
+    rgb[900 * y + x] = 0xFFFFFF;
   }
 
   vsr <<= 1;

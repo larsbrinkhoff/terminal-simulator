@@ -4,6 +4,11 @@
 #include "term.h"
 #include "log.h"
 
+#define USEREVENT_DRAW     (userevent + 0)
+#define USEREVENT_RENDER   (userevent + 1)
+#define USEREVENT_SOUND    (userevent + 2)
+#define USEREVENT_PRESENT  (userevent + 3)
+
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture *screentex;
@@ -22,7 +27,7 @@ void sdl_sound (uint8_t *data, int size)
 {
   SDL_Event ev;
   SDL_zero (ev);
-  ev.type = userevent + 2;
+  ev.type = USEREVENT_SOUND;
   ev.user.data1 = malloc (size);
   ev.user.data2 = malloc (sizeof size);
   memcpy (ev.user.data1, data, size);
@@ -76,7 +81,7 @@ void sdl_refresh (struct draw *data)
 {
   SDL_Event ev;
   SDL_zero (ev);
-  ev.type = userevent;
+  ev.type = USEREVENT_DRAW;
   ev.user.data1 = malloc (sizeof (struct draw));
   memcpy (ev.user.data1, data, sizeof (struct draw));
   SDL_PushEvent (&ev);
@@ -91,68 +96,51 @@ void sdl_render (int brightness, int columns)
   data->brightness = brightness;
   data->renderer = renderer;
   SDL_zero (ev);
-  ev.type = userevent + 1;
+  ev.type = USEREVENT_RENDER;
   ev.user.data1 = data;
   SDL_PushEvent (&ev);
 }
 
-void sdl_scanline (struct draw *data)
+void sdl_present (struct draw *data)
 {
   struct draw *copy;
   SDL_Event ev;
-
+  SDL_zero (ev);
   copy = malloc (sizeof (struct draw));
   memcpy (copy, data, sizeof (struct draw));
-  copy->pixels = malloc (720 * sizeof (uint32_t));
-  memcpy (copy->pixels, data->pixels, 720 * sizeof (uint32_t));
-
-  SDL_zero (ev);
-  ev.type = userevent + 3;
+  ev.type = USEREVENT_PRESENT;
   ev.user.data1 = copy;
   SDL_PushEvent (&ev);
 }
 
-static void draw_scanline (struct draw *data)
+static void draw_present (struct draw *data)
 {
   void *pixels;
-  uint8_t *rgb;
+  uint8_t *rgb, *source;
   int pitch;
+  int i;
 
   if (SDL_LockTexture (screentex, NULL, &pixels, &pitch) != 0) {
     LOG (SDL, "LockTexture error: %s", SDL_GetError ());
     exit (1);
   }
 
-  rgb = pixels;
-  rgb += pitch * BORDER;
-  rgb += pitch * data->line;
-  rgb += sizeof (uint32_t) * BORDER;
-  memcpy (rgb, data->pixels, FBWIDTH * sizeof (uint32_t));
+  for (i = 0; i < 240; i++) {
+    rgb = pixels;
+    rgb += pitch * BORDER;
+    rgb += pitch * i * 2;
+    rgb += sizeof (uint32_t) * BORDER;
+    source = data->pixels;
+    source += sizeof (uint32_t) * 900 * (i + 17);
+    source += sizeof (uint32_t) * 135;
+    memcpy (rgb, source, 720 * sizeof (uint32_t));
+  }
 
   SDL_UnlockTexture (screentex);
-  free (data->pixels);
   free (data);
-}
 
-void sdl_present (void)
-{
-  SDL_Event ev;
-  SDL_zero (ev);
-  ev.type = userevent + 4;
-  SDL_PushEvent (&ev);
-}
-
-static void draw_present (void)
-{
-#if 0
-  int w, h;
-  SDL_GetRendererOutputSize (renderer, &w, &h);
-  opengl_present (screentex, w, h);
-  SDL_GL_SwapWindow (window);
-#else
   SDL_RenderCopy (renderer, screentex, NULL, NULL);
   SDL_RenderPresent (renderer);
-#endif
 }
 
 static void draw (struct draw *data)
@@ -351,16 +339,14 @@ void sdl_loop (void)
       break;
 
     default:
-      if (ev.type == userevent)
+      if (ev.type == USEREVENT_DRAW)
 	draw (ev.user.data1);
-      else if (ev.type == userevent + 1)
+      else if (ev.type == USEREVENT_RENDER)
 	reset_render (ev.user.data1);
-      else if (ev.type == userevent + 2)
+      else if (ev.type == USEREVENT_SOUND)
 	draw_sound (ev.user.data1, ev.user.data2);
-      else if (ev.type == userevent + 3)
-	draw_scanline (ev.user.data1);
-      else if (ev.type == userevent + 4)
-	draw_present ();
+      else if (ev.type == USEREVENT_PRESENT)
+	draw_present (ev.user.data1);
       break;
     }
   }

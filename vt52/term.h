@@ -1,7 +1,7 @@
 #define TERMWIDTH 80
 #define TERMHEIGHT 24
 #define CWIDTH 9
-#define CHEIGHT 8
+#define CHEIGHT 10
 #define FBWIDTH (TERMWIDTH*CWIDTH)
 #define FBHEIGHT (TERMHEIGHT*CHEIGHT)
 #define BORDER 5

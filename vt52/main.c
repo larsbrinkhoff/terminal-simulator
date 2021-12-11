@@ -46,6 +46,20 @@ unsigned long long get_cycles (void)
   return cycles;
 }
 
+Uint32 ticks;
+unsigned long long previous;
+
+static void throttle (void)
+{
+  ticks = SDL_GetTicks () - ticks;
+  previous = cycles - previous;
+  ticks *= 13824;
+  if (previous > ticks)
+    SDL_Delay ((previous - ticks) / 13824);
+  ticks = SDL_GetTicks ();
+  previous = cycles;
+}
+
 static int cputhread (void *arg)
 {
   (void)arg;
@@ -56,6 +70,8 @@ static int cputhread (void *arg)
     timing ();
     step ();
     video ();
+    if ((cycles % 1000000) == 0)
+      throttle ();
   }
 
   return 0;
