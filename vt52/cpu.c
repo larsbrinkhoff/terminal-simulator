@@ -376,7 +376,9 @@ static unsigned int address (void)
 
 void step (void)
 {
+#ifdef DEBUG_VCD
   long long time;
+#endif
   int t = cycles % 18;
 
   switch (t)
@@ -412,6 +414,7 @@ void step (void)
       break;
     }
 
+#ifdef DEBUG_VCD
   time = 1e9 * cycles / 13.824e6;
   vcd_value (time, index_vsr_ld, vsr_ld);
   vcd_value (time, index_auto_inc, auto_inc);
@@ -423,4 +426,5 @@ void step (void)
   vcd_value (time, index_pc, PC);
   vcd_value (time, index_rom, ROM[PC]);
   vcd_value (time, index_mem, M[ADDR]);
+#endif
 }

@@ -11,7 +11,9 @@ static unsigned int counter5 = 0;  //E5  74161
 
 void timing (void)
 {
+#ifdef DEBUG_VCD
   long long t;
+#endif
 
   if (shifter != 0377)
     shifter = (shifter << 1) | 1;
@@ -65,6 +67,7 @@ void timing (void)
   if (counter1 & 010)
     tos = 1;
 
+#ifdef DEBUG_VCD
   t = 1e9 * cycles / 13.824e6;
   vcd_value (t, index_e2_74164,  shifter);
   vcd_value (t, index_e27_74161, counter1);
@@ -78,4 +81,5 @@ void timing (void)
   vcd_value (t, index_fly,       fly);
   vcd_value (t, index_vert,      vert);
   vcd_value (t, index_tos,       tos);
+#endif
 }

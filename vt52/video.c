@@ -20,7 +20,9 @@ void video_shifter (int data)
 
 void video (void)
 {
+#ifdef DEBUG_VCD
   long long t;
+#endif
 
   if (old_scan && !scan) {
     if (y >= 0 && y <= 239) {
@@ -49,10 +51,12 @@ void video (void)
   vsr |= 1;
   x++;
 
+#ifdef DEBUG_VCD
   t = 1e9 * cycles / 13.824e6;
   vcd_real (t, index_beam_x, x);
   vcd_real (t, index_beam_y, y);
   vcd_value (t, index_vsr, vsr);
+#endif
 }
 
 void reset_video (void)
