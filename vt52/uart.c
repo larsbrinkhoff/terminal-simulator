@@ -57,8 +57,6 @@ static int receiver (void *arg)
 
   (void)arg;
 
-  sleep (3);
-
   for (;;) {
     c = receive_character ();
     printf ("Receive %02X %c\n", c, c);

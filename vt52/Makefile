@@ -1,4 +1,4 @@
-CFLAGS=-I. -I../common -I../vcd -O3 -DDEBUG_VCD
+CFLAGS=-I. -I../common -I../vcd -O3
 
 ifeq "$(shell uname)" "Darwin"
  LDFLAGS += -framework OpenGL
