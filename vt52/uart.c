@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "event.h"
 #include "pty.h"
+#include "log.h"
 
 static SDL_mutex *rx_lock;
 static SDL_cond *rx_cond;
@@ -20,9 +21,9 @@ int uart_tx_flag (void)
 
 void uart_tx_data (uint8_t data)
 {
-  printf ("Send %02X %c\n", data, data);
   tx_shift = data;
   send_character (tx_shift);
+  LOG (UART, "Send %02X %c", data, data);
 }
 
 int uart_rx_flag (void)
@@ -59,7 +60,7 @@ static int receiver (void *arg)
 
   for (;;) {
     c = receive_character ();
-    printf ("Receive %02X %c\n", c, c);
+    LOG (UART, "Receive %02X %c", c, c);
 
     SDL_LockMutex (rx_lock);
     while (!rx_empty)

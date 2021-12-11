@@ -1,5 +1,6 @@
 #include "defs.h"
 #include "xsdl.h"
+#include "log.h"
 
 #define CODES 0120
 static SDL_atomic_t down[CODES];
@@ -101,13 +102,13 @@ int key_flag (uint8_t code)
 
 void key_down (uint8_t code)
 {
-  printf ("Key down: %03o\n", code);
+  LOG (KEY, "Key up: %03o", code);
   SDL_AtomicSet (&down[code], 1);
 }
 
 void key_up (uint8_t code)
 {
-  printf ("Key up: %03o\n", code);
+  LOG (KEY, "Key up: %03o", code);
   SDL_AtomicSet (&down[code], 0);
 }
 
