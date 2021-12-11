@@ -139,8 +139,17 @@ static void draw_present (struct draw *data)
   SDL_UnlockTexture (screentex);
   free (data);
 
+#if 0
   SDL_RenderCopy (renderer, screentex, NULL, NULL);
   SDL_RenderPresent (renderer);
+#else
+  {
+    int w, h;
+    SDL_GetRendererOutputSize (renderer, &w, &h);
+    opengl_present (screentex, w, h);
+    SDL_GL_SwapWindow (window);
+  }
+#endif
 }
 
 static void draw (struct draw *data)

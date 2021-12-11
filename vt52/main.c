@@ -122,7 +122,7 @@ int main (void)
 #endif
 
   sdl_init ("VT52", 1, 0);
-  //init_opengl ();
+  init_opengl ();
 
   setenv ("TERM", "vt52", 1);
   reset_keyboard ();
