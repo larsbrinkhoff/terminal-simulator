@@ -21,6 +21,7 @@ int index_e13_7493;
 int index_e11_7493;
 int index_e5_74161;
 int index_e6_74161;
+int index_e7_74161;
 int index_horiz;
 int index_scan;
 int index_fly;
@@ -40,6 +41,8 @@ int index_tosj;
 int index_pc;
 int index_rom;
 int index_mem;
+int index_rx;
+int index_tx;
 
 unsigned long long get_cycles (void)
 {
@@ -100,6 +103,7 @@ int main (void)
   index_e11_7493 = vcd_variable ("e11_7493", "reg", 4);
   index_e5_74161 = vcd_variable ("e5_74161", "reg", 4);
   index_e6_74161 = vcd_variable ("e6_74161", "reg", 4);
+  index_e7_74161 = vcd_variable ("e7_74161", "reg", 4);
   index_horiz = vcd_variable ("horiz", "wire", 1);
   index_scan = vcd_variable ("scan", "wire", 1);
   index_fly = vcd_variable ("fly", "wire", 1);
@@ -118,6 +122,8 @@ int main (void)
   index_pc = vcd_variable ("pc", "reg", 10);
   index_rom = vcd_variable ("rom", "wire", 8);
   index_mem = vcd_variable ("mem", "reg", 7);
+  index_rx = vcd_variable ("rx", "wire", 1);
+  index_tx = vcd_variable ("tx", "wire", 1);
   vcd_start ("dump.vcd", "VT52 simulator", "1ns");
 #endif
 

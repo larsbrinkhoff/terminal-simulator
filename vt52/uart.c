@@ -1,28 +1,26 @@
 #include <SDL.h>
 #include <unistd.h>
 #include "defs.h"
-#include "event.h"
 #include "pty.h"
+#include "rs232.h"
 #include "log.h"
+#include "vcd.h"
 
 static SDL_mutex *rx_lock;
 static SDL_cond *rx_cond;
-static uint8_t rx_shift;
 static uint8_t rx_data;
 static SDL_bool rx_empty;
 
-static uint8_t tx_shift;
-static SDL_bool tx_empty;
+struct rs232 rx_rs232, tx_rs232;
 
 int uart_tx_flag (void)
 {
-  return tx_empty == SDL_FALSE;
+  return tx_rs232.encode_bits > 0;
 }
 
 void uart_tx_data (uint8_t data)
 {
-  tx_shift = data;
-  send_character (tx_shift);
+  rs232_encode (&tx_rs232, data);
   LOG (UART, "Send %02X %c", data, data);
 }
 
@@ -30,7 +28,7 @@ int uart_rx_flag (void)
 {
   int flag;
   SDL_LockMutex (rx_lock);
-  flag = rx_empty == SDL_FALSE;
+  flag = !rx_empty;
   SDL_UnlockMutex (rx_lock);
   return flag;
 }
@@ -44,12 +42,22 @@ uint8_t uart_rx_data (void)
     SDL_UnlockMutex (rx_lock);
     return 0;
   }
-  data = rx_shift;
+  data = rx_data;
   rx_empty = SDL_TRUE;
-  SDL_CondSignal (rx_cond);
   SDL_UnlockMutex (rx_lock);
 
   return data;
+}
+
+static void receive (struct rs232 *rs232)
+{
+  rx_data = rs232->data;
+  rx_empty = SDL_FALSE;
+}
+
+static void transmit (struct rs232 *rs232)
+{
+  send_character (rs232->data);
 }
 
 static int receiver (void *arg)
@@ -63,33 +71,40 @@ static int receiver (void *arg)
     LOG (UART, "Receive %02X %c", c, c);
 
     SDL_LockMutex (rx_lock);
-    while (!rx_empty)
+    while (rx_rs232.encode_bits > 0)
       SDL_CondWait (rx_cond, rx_lock);
-    rx_shift = c;
-    rx_empty = SDL_FALSE;
+    rs232_encode (&rx_rs232, c);
     SDL_UnlockMutex (rx_lock);
   }
 
   return 0;
 }
 
-static void rx_check (void);
-static EVENT (rx_event, rx_check);
+static int tick = 0;
 
-static void rx_check (void)
+void uart_clock (void)
 {
+  tick++;
+
   SDL_LockMutex (rx_lock);
-  if (rx_empty) {
-    add_event (1000, &rx_event);
-    SDL_UnlockMutex (rx_lock);
-    return;
+
+  if (tick == 16) {
+    tick = 0;
+    if (rx_rs232.encode_bits == 0)
+      SDL_CondSignal (rx_cond);
+    rs232_encode_clock (&tx_rs232);
+    rs232_encode_clock (&rx_rs232);
   }
-  rx_data = rx_shift;
-  rx_empty = SDL_TRUE;
-  SDL_CondSignal (rx_cond);
+
+  rs232_decode_clock (&rx_rs232);
   SDL_UnlockMutex (rx_lock);
 
-  add_event (13824000LL / 960, &rx_event);
+  rs232_decode_clock (&tx_rs232);
+
+#ifdef DEBUG_VCD
+  vcd_value (cycles, index_rx, rx_rs232.bit);
+  vcd_value (cycles, index_tx, tx_rs232.bit);
+#endif
 }
 
 void reset_uart (void)
@@ -97,8 +112,8 @@ void reset_uart (void)
   rx_lock = SDL_CreateMutex ();
   rx_cond = SDL_CreateCond ();
   rx_empty = SDL_TRUE;
-  tx_empty = SDL_TRUE;
+  rs232_reset (&rx_rs232, receive);
+  rs232_reset (&tx_rs232, transmit);
 
   SDL_CreateThread (receiver, "VT52: RX", NULL);
-  rx_check ();
 }
