@@ -7,7 +7,7 @@ static unsigned int counter2 = 0;  //E18 7490
 static unsigned int counter3 = 0;  //E13 7493
 static unsigned int counter4 = 1;  //E11 7493
 static unsigned int counter5 = 0;  //E5  74161
-// counter6 E7 74161
+static unsigned int counter6 = 0;  //E7  74161
 
 void timing (void)
 {
@@ -29,6 +29,7 @@ void timing (void)
     counter1 = 0;
     counter2++;
     counter3++;
+    uart_clock ();
   }
 
   if (counter2 == 5)
@@ -49,6 +50,11 @@ void timing (void)
   if (counter5 == 16) {
     tos = 0;
     counter5 = 6; // 60Hz: 6, 50Hz: 4
+    counter6++;
+  }
+
+  if (counter6 == 11) {
+    counter6 = 0;
   }
 
   horiz = (counter2 & 010) != 0;

@@ -7,7 +7,7 @@ else
 endif
 
 SRC=main.c cpu.c rom.c timing.c video.c keyboard.c render.c uart.c \
-	../common/pty.c ../common/event.c \
+	../common/pty.c ../common/event.c ../common/rs232.c \
 	../common/sdl.c ../common/opengl.c ../common/logger.c \
 	../vcd/vcd.c
 DEPS=`sdl2-config --libs --cflags` -lSDL2_image $(LDFLAGS)
