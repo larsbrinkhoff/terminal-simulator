@@ -10,6 +10,7 @@
 float curvature = 0.1;
 unsigned long long cycles;
 int quick = 0;
+int pixcolor = 0;
 
 extern void reset_pty (char **cmd, int th, int tw, int fw, int fh);
 static char *command[] = { "bash", NULL };

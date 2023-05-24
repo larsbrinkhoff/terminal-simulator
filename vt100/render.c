@@ -50,7 +50,11 @@ static void data (u32 *raster, int width, unsigned pixels, struct draw *data)
   int i;
   u32 x = data->brightness;
   x = 255 * (31 - (x & 0x1F)) / 31;
-  lit = x << 16 | x << 8 | x;
+  lit = x << 16 | x << 8 | x; // white
+  if (quick) {
+     if (pixcolor == 2)  lit = x << 16 | x * 8 / 10 << 8; // amber
+     else if (pixcolor == 1)  lit = x << 8 | x * 2 / 10; // green
+  }
   memset (raster, 0, size);
   for (i = 0, mask = (1 << (width - 1)); i < width; i++, mask >>= 1) {
     if (pixels & mask)
