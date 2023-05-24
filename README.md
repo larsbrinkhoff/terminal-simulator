@@ -17,14 +17,19 @@ installed.
 
 ### Usage
 
-The command line syntax is `vt100 [-f] [-D] [-R test] program/device`.
+The command line syntax is `vt100 [-afgh2CDQ] [-c CUR] [-N DIV] [-R test] [program/device]`.
 
+- `-a` set pixel color to amber.
+- `-c CUR` screen curvature (0.0 - 0.5, requires OpenGL)
 - `-f` enters full screen.  Toggle with <kbd>F11</kbd>.
+- `-g` set pixel color to green.
+- `-h` give help message.
+- `-2`magnify by 2; each additional `-2` adds 1 to multiplier.
 - `-D` enters a PDP-10 style DDT for debugging the firmware.
 - `-R test` runs a CP/M program; this is only for testing.
 - `-C` turns capslock into control.
-- `-Q` disables use of OpenGL.
-- `-N` field rate.
+- `-N DIV` reduce recomputation of screen to 60/DIV Hz (may run faster).
+- `-Q` disables use of OpenGL (may run faster).
 - `program/device` is any command to run as a child process providing I/O,
   or a character device assumed to be a serial port.
 
