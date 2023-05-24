@@ -12,6 +12,7 @@
 #include "log.h"
 #include "pty.h"
 
+int pixcolor = 0; // 1 = green, 2 = amber
 int full = 0;
 int quick = 0;
 int field_rate = 1;
@@ -129,6 +130,8 @@ void help(void)
     "  -2      Magnify x2. Each additional '-2' adds 1 to the multiplier.\n"
     "  -f      Run in full-screen.\n"
     "  -c CUR  Screen curvature (0.0 - 0.5, requires OpenGL).\n"
+    "  -g      Green pixels.\n"    
+    "  -a      Amber pixels.\n"
     "  -C      Treat Caps-Lock as Control.\n"
     "  -B      Treat backspace as rubout (currently not implemented).\n"
     "  -R PROG Run CP/M binary file [path/to/]PROG.\n"
@@ -154,8 +157,14 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "hB2fR:DCQN:c:")) != -1) {
+  while ((opt = getopt (argc, argv, "aghB2fR:DCQN:c:")) != -1) {
     switch (opt) {
+    case 'g':
+      pixcolor = 1;
+      break;
+    case 'a':
+      pixcolor = 2;
+      break;
     case 'h':
       help();
       exit(0);
@@ -213,7 +222,6 @@ int main (int argc, char **argv)
     ddt ();
   else
     SDL_CreateThread (cputhread, "vt100: CPU",  NULL);
-
   sdl_loop ();
   return 0;
 }

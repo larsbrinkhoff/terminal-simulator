@@ -27,6 +27,7 @@ static PFNGLUSEPROGRAMPROC glUseProgram;
 static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 static PFNGLUNIFORM1FPROC glUniform1f;
 static PFNGLUNIFORM2FPROC glUniform2f;
+static PFNGLUNIFORM1IPROC glUniform1i;
 static GLuint shader;
 
 static SDL_bool init_proc (void) {
@@ -46,7 +47,8 @@ static SDL_bool init_proc (void) {
   glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)SDL_GL_GetProcAddress("glGetUniformLocation");
   glUniform1f = (PFNGLUNIFORM1FPROC)SDL_GL_GetProcAddress("glUniform1f");
   glUniform2f = (PFNGLUNIFORM2FPROC)SDL_GL_GetProcAddress("glUniform2f");
-  
+  glUniform1i = (PFNGLUNIFORM1IPROC)SDL_GL_GetProcAddress("glUniform1i");
+
   return glCreateShader && glShaderSource && glCompileShader && glGetShaderiv && 
     glGetShaderInfoLog && glDeleteShader && glAttachShader && glCreateProgram &&
     glLinkProgram && glValidateProgram && glGetProgramiv && glGetProgramInfoLog &&
@@ -128,6 +130,12 @@ static void set_uniform1f (unsigned int prog, const char *name, float val) {
     glUniform1f (loc, val);
 }
 
+static void set_uniform1i (unsigned int prog, const char *name, int val) {
+  int loc = glGetUniformLocation (prog, name);
+  if (loc != -1)
+    glUniform1i (loc, val);
+}
+
 static void set_uniform2f (unsigned int prog, const char *name,
 			   float val1, float val2) {
   int loc = glGetUniformLocation (prog, name);
@@ -138,11 +146,13 @@ static void set_uniform2f (unsigned int prog, const char *name,
 void opengl_present (SDL_Texture *target, float width, float height)
 {
   extern float curvature;
+  extern int pixcolor;
 
   SDL_GL_BindTexture (target, NULL, NULL);
   glUseProgram (shader);
   set_uniform2f (shader, "resolution", width, height);
   set_uniform1f (shader, "curvature", curvature);
+  set_uniform1i (shader, "pixcolor", pixcolor);
   glViewport (0, 0, width, height);
   glBegin (GL_TRIANGLE_STRIP);
   glVertex2f (-width, -height);

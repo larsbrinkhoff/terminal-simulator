@@ -22,6 +22,9 @@ extern int pty;
 extern int sound_scope;
 extern int field_rate;
 
+extern int quick;
+extern int pixcolor;
+
 extern u8 vt100rom[];
 extern u8 vt100font[];
 
