@@ -1,6 +1,5 @@
 # Simulation of the VT52 and VT100 hardware
 
-[![Build](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml/badge.svg)](https://github.com/larsbrinkhoff/terminal-simulator/actions/workflows/build.yml)
 
 ### About
 
