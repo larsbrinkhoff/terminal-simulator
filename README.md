@@ -4,22 +4,18 @@
 
 ### About
 
-This is a software simulation of the VT100 hardware.  (There is also a
-VT52 simulation.)  The original firmware ROM is built in and executed
-by an 8080 emulator.  Other components include video display with
-character generator ROM, settings NVRAM, Intel 8251 USART, and a
-keyboard matrix scanner.  The Advanced Video Option is not included.
+This is a fork of Lars Brinkhoff's software simulation of the VT100 hardware, which is itself based on <a href=https://github.com/aap/vt05/>"Angelo Papenhoff's terminal emulator code"</a>
 
-To build this, you need to have the SDL2 and SDL2_image libraries
-installed.
+I have found that the VT100 simulator in its current state fails when I try to directly connect it to a serial port on launch, so I am deploying some patches so that you can use a switch to use the Linux "screen" command to control the serial connection instead. This renders the VT100 sim mostly aesthetic, but that suits my purposes well enough.
 
-<img src="https://user-images.githubusercontent.com/775050/121336737-1a279100-c91c-11eb-87fb-bd015b20e7fa.png" width="200"> <img src="https://user-images.githubusercontent.com/775050/121338972-53610080-c91e-11eb-94aa-8c670bb2e8e3.png" width="200"> <img src="https://user-images.githubusercontent.com/775050/121336830-2dd2f780-c91c-11eb-84b6-e7dacf5324d0.png" width="200">
+Currently the "s" argument sends a hard coded command, but eventually I will modify it so you can specify your serial device path and baud rate as needed.
 
 ### Usage
 
 The command line syntax is `vt100 [-afgh2CDQ] [-c CUR] [-N DIV] [-R test] [program/device]`.
 
 - `-a` set pixel color to amber.
+- `-s` pass the command "screen /dev/serial0 9600" with a CR upon starting up the program
 - `-c CUR` screen curvature (0.0 - 0.5, requires OpenGL)
 - `-f` enters full screen.  Toggle with <kbd>F11</kbd>.
 - `-g` set pixel color to green.
@@ -37,11 +33,3 @@ The command line syntax is `vt100 [-afgh2CDQ] [-c CUR] [-N DIV] [-R test] [progr
 Guide](https://vt100.net/docs/vt100-ug/chapter1.html) for instructions.
 <kbd>Control</kbd>+<kbd>F11</kbd> exits the simlator.
 
-### 3D Printed Model
-
-This simulator was inspired by Michael Gardi's 3D printed model, see his
-[instructions](https://www.instructables.com/23-Scale-VT100-Terminal-Reproduction/)
-and [GitHub files](https://github.com/kidmirage/2-3-Scale-VT100-Terminal-Reproduction).
-
-This is my printing progress so far:
-![VT100 3D print](https://retrocomputingforum.com/uploads/default/original/2X/c/c4f3cae595903887ff446df226e7f89e31eb5b14.jpeg)
