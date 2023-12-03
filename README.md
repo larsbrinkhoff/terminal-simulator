@@ -3,7 +3,7 @@
 
 ### About
 
-This is a fork of Lars Brinkhoff's software simulation of the VT100 hardware, which is itself based on <a href=https://github.com/aap/vt05/>"Angelo Papenhoff's terminal emulator code"</a>
+This is a fork of <a href=https://github.com/larsbrinkhoff/terminal-simulator>"Lars Brinkhoff's software simulation"</a> of the VT100 hardware, which is itself based on <a href=https://github.com/aap/vt05/>"Angelo Papenhoff's terminal emulator code"</a>
 
 I have found that the VT100 simulator in its current state fails when I try to directly connect it to a serial port on launch, so I am deploying some patches so that you can use a switch to use the Linux "screen" command to control the serial connection instead. This renders the VT100 sim mostly aesthetic, but that suits my purposes well enough.
 
