@@ -13,6 +13,13 @@ typedef uint8_t u8;
 #define RST5 0xEF
 #define RST6 0xF7
 #define RST7 0xFF
+#define foreach(item, array) \
+    for(int keep = 1, \
+            count = 0,\
+            size = sizeof (array) / sizeof *(array); \
+        keep && count != size; \
+        keep = !keep, count++) \
+      for (item = (array) + count; keep; keep = !keep)
 
 extern u8 memory[0x10000];
 extern u16 starta;

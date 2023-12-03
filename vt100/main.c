@@ -13,6 +13,7 @@
 #include "pty.h"
 
 int pixcolor = 0; // 1 = green, 2 = amber
+int usescreen =0; // 0 = base 1 = enter screen on serial
 int full = 0;
 int quick = 0;
 int field_rate = 1;
@@ -130,7 +131,7 @@ void help(void)
     "  -2      Magnify x2. Each additional '-2' adds 1 to the multiplier.\n"
     "  -f      Run in full-screen.\n"
     "  -c CUR  Screen curvature (0.0 - 0.5, requires OpenGL).\n"
-    "  -g      Green pixels.\n"    
+    "  -g      Green pixels.\n"
     "  -a      Amber pixels.\n"
     "  -C      Treat Caps-Lock as Control.\n"
     "  -B      Treat backspace as rubout (currently not implemented).\n"
@@ -157,8 +158,11 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "aghB2fR:DCQN:c:")) != -1) {
+  while ((opt = getopt (argc, argv, "saghB2fR:DCQN:c:")) != -1) {
     switch (opt) {
+    case 's':
+      usescreen = 1;
+      break;
     case 'g':
       pixcolor = 1;
       break;
@@ -217,6 +221,15 @@ int main (int argc, char **argv)
   if (!quick)
     init_opengl ();
   reset ();
+
+  // Start screen on serial port after terminal initializes
+  // Array contains ASCII characters for "screen /dev/serial0 9600 <CR>"
+  if (usescreen == 1) {
+    int myLine[] = {115,99,114,101,101,110,32,47,100,101,118,47,115,101,114,105,97,108,48,32,57,54,48,48,13};
+    foreach(int *v, myLine) {
+      send_character(*v);
+    }
+  }
 
   if (debug)
     ddt ();
