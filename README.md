@@ -45,3 +45,6 @@ and [GitHub files](https://github.com/kidmirage/2-3-Scale-VT100-Terminal-Reprodu
 
 This is my printing progress so far:
 ![VT100 3D print](https://retrocomputingforum.com/uploads/default/original/2X/c/c4f3cae595903887ff446df226e7f89e31eb5b14.jpeg)
+
+Update!  After much sanding and filling, here it is together with its larger twin.
+![A Tale of Two VT100](https://github.com/larsbrinkhoff/terminal-simulator/assets/775050/29fb094a-eb13-4044-b9a1-62d60d31aaf3)
