@@ -157,6 +157,9 @@ static void refresh (void)
   add_event (2764800 / hertz, &refresh_event);
 
   fields++;
+  // only refresh if event queue is empty
+  if (SDL_PollEvent(NULL))
+    return;
   if ((fields % field_rate) != 0)
     return;
   //LOG (VID, "Refresh frame %d", frames);
