@@ -154,7 +154,15 @@ static void refresh (void)
   u16 addr;
 
   raise_interrupt (4);
+
+  // only refresh if event queue is empty
+  if (SDL_PollEvent(NULL)) {
+    add_event (2764800 / hertz, &refresh_event);
+    return;
+  }
+
   add_event (2764800 / hertz, &refresh_event);
+  
 
   fields++;
   if ((fields % field_rate) != 0)
