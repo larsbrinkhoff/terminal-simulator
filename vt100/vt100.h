@@ -14,6 +14,8 @@ typedef uint8_t u8;
 #define RST6 0xF7
 #define RST7 0xFF
 
+extern void panic (char *fmt, ...);
+
 extern u8 memory[0x10000];
 extern u16 starta;
 extern unsigned long long get_cycles (void);
@@ -62,3 +64,8 @@ extern void reset_sound (void);
 extern void nvr_clock (void);
 extern void key_down (u8 code);
 extern void key_up (u8 code);
+
+extern int flowers;
+extern void flowers_init(const char *device);
+extern void flowers_leds(u8 data);
+extern int flowers_key(void);

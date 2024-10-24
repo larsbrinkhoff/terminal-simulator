@@ -136,6 +136,7 @@ void help(void)
     "  -B      Treat backspace as rubout (currently not implemented).\n"
     "  -R PROG Run CP/M binary file [path/to/]PROG.\n"
     "  -D      Debug mode.\n"
+    "  -F DEV  Open DEV to talk to Trevor Flowers' mini VT100\n"
     "\n"
     "Project page: https://github.com/larsbrinkhoff/terminal-simulator\n"
     , argv0);
@@ -157,7 +158,7 @@ int main (int argc, char **argv)
   sdl_capslock (0x7E); //Default is capslock.
 
   argv0 = argv[0];
-  while ((opt = getopt (argc, argv, "aghB2fR:DCQN:c:")) != -1) {
+  while ((opt = getopt (argc, argv, "aghB2fF:R:DCQN:c:")) != -1) {
     switch (opt) {
     case 'g':
       pixcolor = 1;
@@ -194,6 +195,9 @@ int main (int argc, char **argv)
       break;
     case 'c':
       curvature = atof (optarg);
+      break;
+    case 'F':
+      flowers_init(optarg);
       break;
     default:
       usage();

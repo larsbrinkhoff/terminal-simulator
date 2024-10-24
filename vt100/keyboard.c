@@ -10,6 +10,8 @@ static SDL_SpinLock kbd_lock;
 
 static void scanning (void);
 static EVENT (scan_event, scanning);
+static void check_flowers (void);
+static EVENT (flowers_event, check_flowers);
 
 uint8_t keymap (SDL_Scancode key)
 {
@@ -122,6 +124,8 @@ static void keyboard_out (u8 port, u8 data)
   u8 changed = previous ^ data;
   if ((vt100_flags & 0x80) == 0)
     return;
+  if (changed & 0x3F)
+    flowers_leds(data);
   if (changed & ~0x40)
     LOG (KEY, "LED:%c%c%c%c %s %s%s",
             (data & 0x08) ? '1' : '-',
@@ -180,6 +184,22 @@ static void scanning (void)
   SDL_AtomicUnlock (&kbd_lock);
 }
 
+static void check_flowers (void)
+{
+  int key = flowers_key ();
+  add_event (1000, &flowers_event);
+  SDL_AtomicLock (&kbd_lock);
+  switch (key) {
+  case '2': // SETUP
+    down[0x7B] ^= 1;
+    break;
+  case '3': // BREAK
+    down[0x23] ^= 1;
+    break;
+  }
+  SDL_AtomicUnlock (&kbd_lock);
+}
+
 void reset_keyboard (void)
 {
   register_port (0x82, keyboard_in, keyboard_out);
@@ -187,4 +207,7 @@ void reset_keyboard (void)
   memset (down, 0, sizeof down);
   down[0x7F] = 1;
   scan = 0x80;
+  flowers_leds(0);
+  if (flowers > 0)
+    add_event (1000, &flowers_event);
 }

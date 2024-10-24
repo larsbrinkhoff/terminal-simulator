@@ -10,7 +10,7 @@ endif
 check: vt100 ../test/test.sh
 	cd ..; sh test/test.sh
 WARN=-Wall -Wno-unused-parameter -Wno-parentheses -Wno-unused-result
-SRC=main.c cpu.c sys.c ddt.c pusart.c \
+SRC=main.c cpu.c sys.c ddt.c pusart.c flowers.c \
 	nvr.c keyboard.c video.c rom.c sound.c render.c \
 	../common/sdl.c ../common/opengl.c ../common/event.c \
 	../common/logger.c ../common/pty.c
